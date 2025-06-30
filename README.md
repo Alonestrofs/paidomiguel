@@ -35,6 +35,6 @@ Uma aplicação web interativa construída com **Streamlit**, que oferece vária
 1. Clone este repositório:
 
 ```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd seu-repositorio
+git clone https://github.com/alonestrofs/paidomiguel.git
+cd paidomiguel
 
