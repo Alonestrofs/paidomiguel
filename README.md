@@ -1,2 +1,40 @@
-# paidomiguel
-Calcula tudo
+# 🧮 Calculadora Avançada Pro
+
+Uma aplicação web interativa construída com **Streamlit**, que oferece várias ferramentas matemáticas em um só lugar:  
+✅ Calculadora básica,  
+✅ Resolvedor de equações polinomiais,  
+✅ Calculadora de somatórios,  
+✅ Derivadas, integrais, séries de Taylor,  
+✅ Plotagem de gráficos de funções.
+
+---
+
+## ✨ Funcionalidades
+
+- **Calculadora Básica**: operações aritméticas simples (+, −, ×, ÷, potência).
+- **Resolvedor de Equações Polinomiais**: resolve equações como `x**2 - 4 = 0`.
+- **Somatórios**: calcula somatórios de expressões simbólicas.
+- **Cálculos Avançados**: derivadas de ordem n, integrais definidas e indefinidas, série de Taylor.
+- **Calculadora Gráfica**: gera gráficos de funções matemáticas.
+
+---
+
+## 📦 Tecnologias e bibliotecas utilizadas
+
+- [Streamlit](https://streamlit.io/) – para construir a interface web.
+- [SymPy](https://www.sympy.org/) – para cálculos simbólicos.
+- [NumPy](https://numpy.org/) – para arrays e funções numéricas.
+- [Matplotlib](https://matplotlib.org/) – para plotagem de gráficos.
+
+---
+
+## 🚀 Como rodar o projeto localmente
+
+> **Pré-requisitos:** Python 3.8+ instalado.
+
+1. Clone este repositório:
+
+```bash
+git clone https://github.com/seu-usuario/seu-repositorio.git
+cd seu-repositorio
+
