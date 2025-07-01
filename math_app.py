@@ -296,11 +296,11 @@ def advanced_calculator():
                     expr = parse_expr(func_str.replace('^','**'))
                     s = Symbol('s')
                     if transf_type == "Laplace":
-                    lap = laplace_transform(expr, Symbol('x'), s, noconds=True)
-                    st.latex(f"\\mathcal{{L}}[{latex(expr)}] = {latex(lap)}")
+                        lap = laplace_transform(expr, Symbol('x'), s, noconds=True)
+                        st.latex(f"\\mathcal{{L}}[{latex(expr)}] = {latex(lap)}")
                     else:
-                    inv = inverse_laplace_transform(expr, s, Symbol('x'))
-                    st.latex(f"\\mathcal{{L}}^{{-1}}[{latex(expr)}] = {latex(inv)}")
+                        inv = inverse_laplace_transform(expr, s, Symbol('x'))
+                        st.latex(f"\\mathcal{{L}}^{{-1}}[{latex(expr)}] = {latex(inv)}")
                 except Exception as e:
                     st.error(f"Erro no cálculo: {str(e)}")
 
