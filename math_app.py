@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import (symbols, diff, integrate, series, parse_expr, sin, cos, tan, 
-                  exp, log, sqrt, latex, solve, summation, Eq, Symbol, lambdify)
+                  exp, log, sqrt, latex, solve, summation, Eq, Symbol, lambdify, limit, laplace_transform, inverse_laplace_transform)
 from sympy.parsing.sympy_parser import parse_expr
 
 # Configuração da página
@@ -208,6 +208,7 @@ def advanced_calculator():
     x = symbols('x')
     y = symbols('y')
     
+    # Campos extras conforme operação
     if operation == "Derivada":
         order = st.number_input("Ordem da derivada:", min_value=1, value=1, step=1, key="deriv_order")
     elif operation == "Integral Definida":
@@ -216,12 +217,23 @@ def advanced_calculator():
             a = st.text_input("Limite inferior (a):", value="0", key="int_a")
         with col_b:
             b = st.text_input("Limite superior (b):", value="1", key="int_b")
+    elif operation == "Integral Parcial":
+        var = st.selectbox("Variável de integração:", ("x", "y"), key="partial_var")
+        lower = st.text_input("Limite inferior:", value="0", key="partial_lower")
+        upper = st.text_input("Limite superior:", value="1", key="partial_upper")
+    elif operation == "Limite":
+        var = st.selectbox("Variável:", ("x", "y"), key="lim_var")
+        point = st.text_input("Ponto de aproximação:", value="0", key="lim_point")
+        direction = st.selectbox("Direção:", ("ambos", "+", "-"), key="lim_dir")
     elif operation == "Série de Taylor":
         col_x0, col_n = st.columns(2)
         with col_x0:
             x0 = st.text_input("Ponto (x0):", value="0", key="taylor_x0")
         with col_n:
             n = st.number_input("Ordem (n):", min_value=1, value=4, step=1, key="taylor_n")
+    elif operation == "Transformação":
+        transf = st.selectbox("Tipo de transformação:", ("Laplace", "Inversa de Laplace"), key="transf_type")
+        s = symbols('s')
     
     if st.button("Calcular", key="adv_calc"):
         if not func_str:
@@ -252,6 +264,24 @@ def advanced_calculator():
                         rf"\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} {latex(expr)}\,dx = {latex(result)}"
                     )
                 
+                elif operation == "Integral Parcial":
+                    var_sym = symbols(var)
+                    lower_expr = parse_expr(lower.replace('^', '**'))
+                    upper_expr = parse_expr(upper.replace('^', '**'))
+                    result = integrate(expr, (var_sym, lower_expr, upper_expr))
+                    st.latex(
+                        rf"\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} {latex(expr)}\,d{latex(var_sym)} = {latex(result)}"
+                    )
+
+                elif operation == "Limite":
+                    var_sym = symbols(var)
+                    point_expr = parse_expr(point.replace('^', '**'))
+                    dir_map = {"ambos": None, "+": "+", "-": "-"}
+                    lim_result = limit(expr, var_sym, point_expr, dir_map[direction])
+                    st.latex(
+                        rf"\lim_{{{latex(var_sym)} \to {latex(point_expr)}}} {latex(expr)} = {latex(lim_result)}"
+                    )
+
                 elif operation == "Série de Taylor":
                     x0_expr = parse_expr(x0.replace('^', '**'))
                     result = series(expr, x, x0_expr, n).removeO()
@@ -260,8 +290,20 @@ def advanced_calculator():
                     )
                     st.latex(latex(result))
                 
+                elif operation == "Transformação":
+                    if transf == "Laplace":
+                        lap = laplace_transform(expr, x, s, noconds=True)
+                        st.latex(
+                            rf"\mathcal{{L}}\left[{latex(expr)}\right] = {latex(lap)}"
+                        )
+                    else:
+                        inv_lap = inverse_laplace_transform(expr, s, x)
+                        st.latex(
+                            rf"\mathcal{{L}}^{{-1}}\left[{latex(expr)}\right] = {latex(inv_lap)}"
+                        )
+                
                 # Opção para plotar a função
-                if st.checkbox("Mostrar gráfico desta função"):
+                if operation not in ("Transformação", "Limite") and st.checkbox("Mostrar gráfico desta função"):
                     plot_function(expr, x)
             
             except Exception as e:
