@@ -200,13 +200,29 @@ def advanced_calculator():
         if st.button("Calcular derivada", key="deriv_calc"):
             if func_str:
                 try:
-                    func_str = func_str.replace('^', '**')
-                    expr = parse_expr(func_str)
-                    steps = []
-                    steps.append(f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}")
-                    steps.append(f"\\textbf{{Regra:}}\\\\ \\frac{{d^{{{order}}}}}{{dx^{{{order}}}}} f(x)")
-                    deriv = diff(expr, Symbol('x'), order)
-                    steps.append(f"\\textbf{{Resultado final:}}\\\\ f^{{({order})}}(x) = {latex(deriv)}")
+                    expr = parse_expr(func_str.replace('^', '**'))
+                    x = Symbol('x')
+                    steps = [f"Função original: $f(x) = {latex(expr)}$"]
+                    if isinstance(expr, Add):
+                        steps.append("Aplicar a regra da soma: $(f+g)' = f' + g'$")
+                        partials = []
+                        for arg in expr.args:
+                            d = diff(arg, x, order)
+                            partials.append(f"$\\frac{{d^{{{order}}}}}{{dx^{{{order}}}}}({latex(arg)}) = {latex(d)}$")
+                        steps += partials
+                    elif isinstance(expr, Mul):
+                        steps.append("Aplicar a regra do produto: $(u\\cdot v)' = u'v + uv'$")
+                        u, v = expr.args
+                        du = diff(u, x, order)
+                        dv = diff(v, x, order)
+                        steps.append(f"$u = {latex(u)}, u' = {latex(du)}$")
+                        steps.append(f"$v = {latex(v)}, v' = {latex(dv)}$")
+                        deriv = du*v + u*dv
+                        steps.append(f"Resultado: $u'v + uv' = {latex(deriv)}$")
+                    else:
+                        deriv = diff(expr, x, order)
+                        steps.append(f"Derivando diretamente: $f^{{({order})}}(x) = {latex(deriv)}$")
+                    steps.append(f"Resultado final simplificado: ${latex(simplify(deriv))}$")
                     for s in steps:
                         st.latex(s)
                 except Exception as e:
@@ -222,22 +238,30 @@ def advanced_calculator():
         if st.button("Calcular integral", key="int_calc"):
             if func_str:
                 try:
-                    func_str = func_str.replace('^', '**')
-                    expr = parse_expr(func_str)
-                    steps = [f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}"]
-                    if int_type == "Indefinida":
-                        intg = integrate(expr, Symbol('x'))
-                        steps.append(f"\\textbf{{Resultado final:}}\\\\ \\int {latex(expr)} dx = {latex(intg)} + C")
+                    expr = parse_expr(func_str.replace('^', '**'))
+                    x = Symbol('x')
+                    steps = [f"Função original: $f(x) = {latex(expr)}$"]
+                    if isinstance(expr, Add):
+                        steps.append("Aplicar a linearidade: $\\int(f+g)dx = \\int f dx + \\int g dx$")
+                        parts = []
+                        for arg in expr.args:
+                            integ = integrate(arg, x)
+                            parts.append(f"$\\int {latex(arg)} dx = {latex(integ)}$")
+                        steps += parts
+                        total = integrate(expr, x)
+                        steps.append(f"Somando: ${latex(total)}$")
+                        steps.append(f"Resultado final: ${latex(total)} + C$")
                     else:
-                        a_expr = parse_expr(a.replace('^','**'))
-                        b_expr = parse_expr(b.replace('^','**'))
-                        F = integrate(expr, Symbol('x'))
-                        Fb = F.subs(Symbol('x'), b_expr)
-                        Fa = F.subs(Symbol('x'), a_expr)
-                        result = integrate(expr, (Symbol('x'), a_expr, b_expr))
-                        steps.append(f"\\textbf{{Primitiva:}}\\\\ F(x) = {latex(F)}")
-                        steps.append(f"\\textbf{{Avaliação nos limites:}}\\\\ F({latex(b_expr)}) - F({latex(a_expr)}) = {latex(Fb)} - {latex(Fa)}")
-                        steps.append(f"\\textbf{{Resultado final:}}\\\\ {latex(result)}")
+                        intg = integrate(expr, x)
+                        steps.append(f"Primitiva: ${latex(intg)}$")
+                        steps.append(f"Resultado final: ${latex(intg)} + C$")
+                    if int_type == "Definida":
+                        a_expr = parse_expr(a.replace('^', '**'))
+                        b_expr = parse_expr(b.replace('^', '**'))
+                        Fa = intg.subs(x, a_expr)
+                        Fb = intg.subs(x, b_expr)
+                        result = Fb - Fa
+                        steps.append(f"Avaliar: $F({latex(b_expr)}) - F({latex(a_expr)}) = {latex(Fb)} - {latex(Fa)} = {latex(result)}$")
                     for s in steps:
                         st.latex(s)
                 except Exception as e:
@@ -251,14 +275,15 @@ def advanced_calculator():
         if st.button("Calcular limite", key="lim_calc"):
             if func_str:
                 try:
-                    expr = parse_expr(func_str.replace('^','**'))
-                    var = Symbol('x')
-                    point_expr = parse_expr(point.replace('^','**'))
+                    expr = parse_expr(func_str.replace('^', '**'))
+                    x = Symbol('x')
+                    point_expr = parse_expr(point.replace('^', '**'))
                     dir_map = {"ambos": None, "+": "+", "-": "-"}
-                    result = limit(expr, var, point_expr, dir_map[direction])
+                    result = limit(expr, x, point_expr, dir_map[direction])
                     steps = [
-                        f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}",
-                        f"\\textbf{{Resultado final:}}\\\\ \\lim_{{x \\to {latex(point_expr)}}} f(x) = {latex(result)}"
+                        f"Função original: $f(x) = {latex(expr)}$",
+                        f"Calcular: $\\lim_{{x \\to {latex(point_expr)}{direction}}} f(x)$",
+                        f"Resultado: ${latex(result)}$"
                     ]
                     for s in steps:
                         st.latex(s)
@@ -277,9 +302,9 @@ def advanced_calculator():
                     x0_expr = parse_expr(x0.replace('^','**'))
                     result = series(expr, Symbol('x'), x0_expr, n).removeO()
                     steps = [
-                        f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}",
-                        f"\\textbf{{Série de Taylor até ordem {n} em x0={latex(x0_expr)}:}}",
-                        f"{latex(result)}"
+                        f"Função original: $f(x) = {latex(expr)}$",
+                        f"Série de Taylor até ordem {n} em $x_0={latex(x0_expr)}$:",
+                        f"${latex(result)}$"
                     ]
                     for s in steps:
                         st.latex(s)
@@ -295,14 +320,16 @@ def advanced_calculator():
                 try:
                     expr = parse_expr(func_str.replace('^','**'))
                     s = Symbol('s')
+                    x = Symbol('x')
                     if transf_type == "Laplace":
-                        lap = laplace_transform(expr, Symbol('x'), s, noconds=True)
-                        st.latex(f"\\mathcal{{L}}[{latex(expr)}] = {latex(lap)}")
+                        lap = laplace_transform(expr, x, s, noconds=True)
+                        st.latex(f"Transformada de Laplace: $\\mathcal{{L}}[{latex(expr)}] = {latex(lap)}$")
                     else:
-                        inv = inverse_laplace_transform(expr, s, Symbol('x'))
-                        st.latex(f"\\mathcal{{L}}^{{-1}}[{latex(expr)}] = {latex(inv)}")
+                        inv = inverse_laplace_transform(expr, s, x)
+                        st.latex(f"Inversa: $\\mathcal{{L}}^{{-1}}[{latex(expr)}] = {latex(inv)}$")
                 except Exception as e:
                     st.error(f"Erro no cálculo: {str(e)}")
+
 
 
 def graphing_calculator():
