@@ -390,12 +390,9 @@ def main():
         polynomial_solver()
     with tab3:
         summation_calculator()
-        summation_calculator()
     with tab4:
         advanced_calculator()
-        advanced_calculator()
     with tab5:
-        graphing_calculator()
         graphing_calculator()
 if __name__ == "__main__":
     main()
