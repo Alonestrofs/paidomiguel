@@ -204,73 +204,73 @@ def advanced_calculator():
     if st.button("Calcular", key="adv_calc"):
         if not func_str:
             st.error("Por favor, insira uma função válida.")
-    else:
-        try:
-            x = symbols('x')
-            expr = parse_expr(func_str)
-            result = None
-            label = ""
-            
-            if operation == "Derivada":
-                order_val = order if 'order' in locals() else 1
-                result = diff(expr, x, order_val)
-                label = f"Derivada de ordem {order_val}"
-                st.markdown(f"""
-                <div class="math-result">
-                    <b>{label}:</b><br><br>
-                    {latex(result, mode='inline')}
-                </div>
-                """, unsafe_allow_html=True)
-                if st.checkbox("Mostrar gráfico da derivada"):
-                    plot_function(result, x)
-            
-            elif operation == "Integral Indefinida":
-                result = integrate(expr, x)
-                label = "Integral Indefinida"
-                st.markdown(f"""
-                <div class="math-result">
-                    <b>{label}:</b><br><br>
-                    {latex(result, mode='inline')} + C
-                </div>
-                """, unsafe_allow_html=True)
-                if st.checkbox("Mostrar gráfico da integral indefinida"):
-                    plot_function(result, x)
-            
-            elif operation == "Integral Definida":
-                a_expr = parse_expr(a)
-                b_expr = parse_expr(b)
-                result = integrate(expr, (x, a_expr, b_expr))
-                label = f"Integral Definida de {a} a {b}"
-                st.markdown(f"""
-                <div class="math-result">
-                    <b>{label}:</b><br><br>
-                    {latex(result, mode='inline')}
-                </div>
-                """, unsafe_allow_html=True)
+        else:
+            try:
+                x = symbols('x')
+                expr = parse_expr(func_str)
+                result = None
+                label = ""
                 
+                if operation == "Derivada":
+                    order_val = order if 'order' in locals() else 1
+                    result = diff(expr, x, order_val)
+                    label = f"Derivada de ordem {order_val}"
+                    st.markdown(f"""
+                    <div class="math-result">
+                        <b>{label}:</b><br><br>
+                        {latex(result, mode='inline')}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if st.checkbox("Mostrar gráfico da derivada"):
+                        plot_function(result, x)
+                
+                elif operation == "Integral Indefinida":
+                    result = integrate(expr, x)
+                    label = "Integral Indefinida"
+                    st.markdown(f"""
+                    <div class="math-result">
+                        <b>{label}:</b><br><br>
+                        {latex(result, mode='inline')} + C
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if st.checkbox("Mostrar gráfico da integral indefinida"):
+                        plot_function(result, x)
+                
+                elif operation == "Integral Definida":
+                    a_expr = parse_expr(a)
+                    b_expr = parse_expr(b)
+                    result = integrate(expr, (x, a_expr, b_expr))
+                    label = f"Integral Definida de {a} a {b}"
+                    st.markdown(f"""
+                    <div class="math-result">
+                        <b>{label}:</b><br><br>
+                        {latex(result, mode='inline')}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if st.checkbox("Mostrar gráfico da função original"):
+                        plot_function(expr, x)
+                
+                elif operation == "Série de Taylor":
+                    x0_expr = parse_expr(x0)
+                    n_val = n if 'n' in locals() else 4
+                    result = series(expr, x, x0_expr, n_val).removeO()
+                    label = f"Série de Taylor em x={x0} até ordem {n_val}"
+                    st.markdown(f"""
+                    <div class="math-result">
+                        <b>{label}:</b><br><br>
+                        {latex(result, mode='inline')}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if st.checkbox("Mostrar gráfico da série de Taylor"):
+                        plot_function(result, x)
+                
+                # Continua mostrando o gráfico da função original
                 if st.checkbox("Mostrar gráfico da função original"):
                     plot_function(expr, x)
-            
-            elif operation == "Série de Taylor":
-                x0_expr = parse_expr(x0)
-                n_val = n if 'n' in locals() else 4
-                result = series(expr, x, x0_expr, n_val).removeO()
-                label = f"Série de Taylor em x={x0} até ordem {n_val}"
-                st.markdown(f"""
-                <div class="math-result">
-                    <b>{label}:</b><br><br>
-                    {latex(result, mode='inline')}
-                </div>
-                """, unsafe_allow_html=True)
-                if st.checkbox("Mostrar gráfico da série de Taylor"):
-                    plot_function(result, x)
-            
-            # Continua mostrando o gráfico da função original
-            if st.checkbox("Mostrar gráfico da função original"):
-                plot_function(expr, x)
 
-        except Exception as e:
-            st.error(f"Erro no cálculo: {str(e)}")
+            except Exception as e:
+                st.error(f"Erro no cálculo: {str(e)}")
 
 def graphing_calculator():
     """Calculadora gráfica"""
