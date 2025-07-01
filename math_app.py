@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import (symbols, diff, integrate, series, parse_expr, sin, cos, tan, 
-                  exp, log, sqrt, latex, solve, summation, Eq, Symbol, lambdify, limit, laplace_transform, inverse_laplace_transform)
+                  exp, log, sqrt, latex, solve, summation, Eq, Symbol, lambdify, limit, laplace_transform, inverse_laplace_transform, apart, together, simplify, expand, pretty)
 from sympy.parsing.sympy_parser import parse_expr
 
 # Configuração da página
@@ -240,67 +240,92 @@ def advanced_calculator():
             st.error("Por favor, insira uma função válida.")
         else:
             try:
-                # Substitui ^ por ** para compatibilidade com sympy
                 func_str = func_str.replace('^', '**')
                 expr = parse_expr(func_str)
-                
+                steps = []
+
                 if operation == "Derivada":
-                    result = diff(expr, x, order)
-                    st.latex(
-                        rf"\frac{{d^{order}}}{{dx^{order}}}\left({latex(expr)}\right) = {latex(result)}"
-                    )
-                
+                    # Passo 1: Mostra a função original
+                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
+                    # Passo 2: Mostra a regra da derivada
+                    steps.append(f"Aplicando a derivada de ordem {order}: $\\frac{{d^{order}}}{{dx^{order}}}({latex(expr)})$")
+                    # Passo 3: Calcula a derivada
+                    deriv = diff(expr, x, order)
+                    steps.append(f"Resultado: $f^{{({order})}}(x) = {latex(deriv)}$")
+                    for s in steps:
+                        st.latex(s)
+
                 elif operation == "Integral Indefinida":
-                    result = integrate(expr, x)
-                    st.latex(
-                        rf"\int {latex(expr)}\,dx = {latex(result)} + C"
-                    )
-                
+                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
+                    steps.append(f"Aplicando a integral indefinida: $\\int {latex(expr)}\\,dx$")
+                    intg = integrate(expr, x)
+                    steps.append(f"Resultado: $\\int {latex(expr)}\\,dx = {latex(intg)} + C$")
+                    for s in steps:
+                        st.latex(s)
+
                 elif operation == "Integral Definida":
                     a_expr = parse_expr(a.replace('^', '**'))
                     b_expr = parse_expr(b.replace('^', '**'))
+                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
+                    steps.append(f"Aplicando a integral definida: $\\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} {latex(expr)}\\,dx$")
+                    F = integrate(expr, x)
+                    steps.append(f"Primitiva: $F(x) = {latex(F)}$")
+                    Fb = F.subs(x, b_expr)
+                    Fa = F.subs(x, a_expr)
+                    steps.append(f"Avaliando nos limites: $F({latex(b_expr)}) - F({latex(a_expr)}) = {latex(Fb)} - {latex(Fa)}$")
                     result = integrate(expr, (x, a_expr, b_expr))
-                    st.latex(
-                        rf"\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} {latex(expr)}\,dx = {latex(result)}"
-                    )
-                
+                    steps.append(f"Resultado: $\\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} {latex(expr)}\\,dx = {latex(result)}$")
+                    for s in steps:
+                        st.latex(s)
+
                 elif operation == "Integral Parcial":
                     var_sym = symbols(var)
                     lower_expr = parse_expr(lower.replace('^', '**'))
                     upper_expr = parse_expr(upper.replace('^', '**'))
+                    steps.append(f"Função original: $f({latex(var_sym)}) = {latex(expr)}$")
+                    steps.append(f"Aplicando a integral definida em {latex(var_sym)}: $\\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} {latex(expr)}\\,d{latex(var_sym)}$")
+                    F = integrate(expr, var_sym)
+                    steps.append(f"Primitiva: $F({latex(var_sym)}) = {latex(F)}$")
+                    Fb = F.subs(var_sym, upper_expr)
+                    Fa = F.subs(var_sym, lower_expr)
+                    steps.append(f"Avaliando nos limites: $F({latex(upper_expr)}) - F({latex(lower_expr)}) = {latex(Fb)} - {latex(Fa)}$")
                     result = integrate(expr, (var_sym, lower_expr, upper_expr))
-                    st.latex(
-                        rf"\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} {latex(expr)}\,d{latex(var_sym)} = {latex(result)}"
-                    )
+                    steps.append(f"Resultado: $\\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} {latex(expr)}\\,d{latex(var_sym)} = {latex(result)}$")
+                    for s in steps:
+                        st.latex(s)
 
                 elif operation == "Limite":
                     var_sym = symbols(var)
                     point_expr = parse_expr(point.replace('^', '**'))
                     dir_map = {"ambos": None, "+": "+", "-": "-"}
+                    steps.append(f"Função original: $f({latex(var_sym)}) = {latex(expr)}$")
+                    steps.append(f"Calculando o limite: $\\lim_{{{latex(var_sym)} \\to {latex(point_expr)}}} {latex(expr)}$")
                     lim_result = limit(expr, var_sym, point_expr, dir_map[direction])
-                    st.latex(
-                        rf"\lim_{{{latex(var_sym)} \to {latex(point_expr)}}} {latex(expr)} = {latex(lim_result)}"
-                    )
+                    steps.append(f"Resultado: $\\lim_{{{latex(var_sym)} \\to {latex(point_expr)}}} {latex(expr)} = {latex(lim_result)}$")
+                    for s in steps:
+                        st.latex(s)
 
                 elif operation == "Série de Taylor":
                     x0_expr = parse_expr(x0.replace('^', '**'))
+                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
+                    steps.append(f"Expandindo em série de Taylor em $x_0 = {latex(x0_expr)}$ até ordem $n = {n}$:")
                     result = series(expr, x, x0_expr, n).removeO()
-                    st.latex(
-                        rf"\text{{Série de Taylor de }} {latex(expr)} \text{{ em }} x={latex(x0_expr)} \text{{ até ordem }} {n}:"
-                    )
-                    st.latex(latex(result))
+                    steps.append(f"Série de Taylor: ${latex(result)}$")
+                    for s in steps:
+                        st.latex(s)
                 
                 elif operation == "Transformação":
+                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
                     if transf == "Laplace":
+                        steps.append("Aplicando a Transformada de Laplace:")
                         lap = laplace_transform(expr, x, s, noconds=True)
-                        st.latex(
-                            rf"\mathcal{{L}}\left[{latex(expr)}\right] = {latex(lap)}"
-                        )
+                        steps.append(f"Resultado: $\\mathcal{{L}}\\left[{latex(expr)}\\right] = {latex(lap)}$")
                     else:
+                        steps.append("Aplicando a Transformada Inversa de Laplace:")
                         inv_lap = inverse_laplace_transform(expr, s, x)
-                        st.latex(
-                            rf"\mathcal{{L}}^{{-1}}\left[{latex(expr)}\right] = {latex(inv_lap)}"
-                        )
+                        steps.append(f"Resultado: $\\mathcal{{L}}^{{-1}}\\left[{latex(expr)}\\right] = {latex(inv_lap)}$")
+                    for s in steps:
+                        st.latex(s)
                 
                 # Opção para plotar a função
                 if operation not in ("Transformação", "Limite") and st.checkbox("Mostrar gráfico desta função"):
