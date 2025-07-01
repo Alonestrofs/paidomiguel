@@ -246,35 +246,38 @@ def advanced_calculator():
 
                 if operation == "Derivada":
                     # Passo 1: Mostra a função original
-                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
+                    steps.append(f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}")
                     # Passo 2: Mostra a regra da derivada
-                    steps.append(f"Aplicando a derivada de ordem {order}: $\\frac{{d^{order}}}{{dx^{order}}}({latex(expr)})$")
+                    steps.append(f"\\textbf{{Regra:}}\\\\ \\frac{{d^{{{order}}}}}{{dx^{{{order}}}}} f(x)")
                     # Passo 3: Calcula a derivada
                     deriv = diff(expr, x, order)
-                    steps.append(f"Resultado: $f^{{({order})}}(x) = {latex(deriv)}$")
+                    steps.append(f"\\textbf{{Aplicando a regra:}}\\\\ \\frac{{d^{{{order}}}}}{{dx^{{{order}}}}}({latex(expr)}) = {latex(deriv)}")
+                    # Passo 4: Resultado final
+                    steps.append(f"\\textbf{{Resultado final:}}\\\\ f^{{({order})}}(x) = {latex(deriv)}")
                     for s in steps:
                         st.latex(s)
 
                 elif operation == "Integral Indefinida":
-                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
-                    steps.append(f"Aplicando a integral indefinida: $\\int {latex(expr)}\\,dx$")
+                    steps.append(f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}")
+                    steps.append(f"\\textbf{{Regra:}}\\\\ \\int f(x)\\,dx")
                     intg = integrate(expr, x)
-                    steps.append(f"Resultado: $\\int {latex(expr)}\\,dx = {latex(intg)} + C$")
+                    steps.append(f"\\textbf{{Primitiva:}}\\\\ F(x) = {latex(intg)} + C")
+                    steps.append(f"\\textbf{{Resultado final:}}\\\\ \\int {latex(expr)}\\,dx = {latex(intg)} + C")
                     for s in steps:
                         st.latex(s)
 
                 elif operation == "Integral Definida":
                     a_expr = parse_expr(a.replace('^', '**'))
                     b_expr = parse_expr(b.replace('^', '**'))
-                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
-                    steps.append(f"Aplicando a integral definida: $\\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} {latex(expr)}\\,dx$")
+                    steps.append(f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}")
+                    steps.append(f"\\textbf{{Regra:}}\\\\ \\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} f(x)\\,dx")
                     F = integrate(expr, x)
-                    steps.append(f"Primitiva: $F(x) = {latex(F)}$")
+                    steps.append(f"\\textbf{{Primitiva:}}\\\\ F(x) = {latex(F)}")
                     Fb = F.subs(x, b_expr)
                     Fa = F.subs(x, a_expr)
-                    steps.append(f"Avaliando nos limites: $F({latex(b_expr)}) - F({latex(a_expr)}) = {latex(Fb)} - {latex(Fa)}$")
+                    steps.append(f"\\textbf{{Avaliação nos limites:}}\\\\ F({latex(b_expr)}) - F({latex(a_expr)}) = {latex(Fb)} - {latex(Fa)}")
                     result = integrate(expr, (x, a_expr, b_expr))
-                    steps.append(f"Resultado: $\\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} {latex(expr)}\\,dx = {latex(result)}$")
+                    steps.append(f"\\textbf{{Resultado final:}}\\\\ \\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} {latex(expr)}\\,dx = {latex(result)}")
                     for s in steps:
                         st.latex(s)
 
@@ -282,15 +285,15 @@ def advanced_calculator():
                     var_sym = symbols(var)
                     lower_expr = parse_expr(lower.replace('^', '**'))
                     upper_expr = parse_expr(upper.replace('^', '**'))
-                    steps.append(f"Função original: $f({latex(var_sym)}) = {latex(expr)}$")
-                    steps.append(f"Aplicando a integral definida em {latex(var_sym)}: $\\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} {latex(expr)}\\,d{latex(var_sym)}$")
+                    steps.append(f"\\textbf{{Função original:}}\\\\ f({latex(var_sym)}) = {latex(expr)}")
+                    steps.append(f"\\textbf{{Regra:}}\\\\ \\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} f({latex(var_sym)})\\,d{latex(var_sym)}")
                     F = integrate(expr, var_sym)
-                    steps.append(f"Primitiva: $F({latex(var_sym)}) = {latex(F)}$")
+                    steps.append(f"\\textbf{{Primitiva:}}\\\\ F({latex(var_sym)}) = {latex(F)}")
                     Fb = F.subs(var_sym, upper_expr)
                     Fa = F.subs(var_sym, lower_expr)
-                    steps.append(f"Avaliando nos limites: $F({latex(upper_expr)}) - F({latex(lower_expr)}) = {latex(Fb)} - {latex(Fa)}$")
+                    steps.append(f"\\textbf{{Avaliação nos limites:}}\\\\ F({latex(upper_expr)}) - F({latex(lower_expr)}) = {latex(Fb)} - {latex(Fa)}")
                     result = integrate(expr, (var_sym, lower_expr, upper_expr))
-                    steps.append(f"Resultado: $\\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} {latex(expr)}\\,d{latex(var_sym)} = {latex(result)}$")
+                    steps.append(f"\\textbf{{Resultado final:}}\\\\ \\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} {latex(expr)}\\,d{latex(var_sym)} = {latex(result)}")
                     for s in steps:
                         st.latex(s)
 
@@ -298,10 +301,10 @@ def advanced_calculator():
                     var_sym = symbols(var)
                     point_expr = parse_expr(point.replace('^', '**'))
                     dir_map = {"ambos": None, "+": "+", "-": "-"}
-                    steps.append(f"Função original: $f({latex(var_sym)}) = {latex(expr)}$")
-                    steps.append(f"Calculando o limite: $\\lim_{{{latex(var_sym)} \\to {latex(point_expr)}}} {latex(expr)}$")
+                    steps.append(f"\\textbf{{Função original:}}\\\\ f({latex(var_sym)}) = {latex(expr)}")
+                    steps.append(f"\\textbf{{Regra:}}\\\\ \\lim_{{{latex(var_sym)} \\to {latex(point_expr)}}} f({latex(var_sym)})")
                     lim_result = limit(expr, var_sym, point_expr, dir_map[direction])
-                    steps.append(f"Resultado: $\\lim_{{{latex(var_sym)} \\to {latex(point_expr)}}} {latex(expr)} = {latex(lim_result)}$")
+                    steps.append(f"\\textbf{{Resultado final:}}\\\\ \\lim_{{{latex(var_sym)} \\to {latex(point_expr)}}} {latex(expr)} = {latex(lim_result)}")
                     for s in steps:
                         st.latex(s)
 
@@ -315,15 +318,15 @@ def advanced_calculator():
                         st.latex(s)
                 
                 elif operation == "Transformação":
-                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
+                    steps.append(f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}")
                     if transf == "Laplace":
-                        steps.append("Aplicando a Transformada de Laplace:")
+                        steps.append("\\textbf{Regra:}\\\\ \\mathcal{L}[f(x)] = F(s)")
                         lap = laplace_transform(expr, x, s, noconds=True)
-                        steps.append(f"Resultado: $\\mathcal{{L}}\\left[{latex(expr)}\\right] = {latex(lap)}$")
+                        steps.append(f"\\textbf{{Resultado final:}}\\\\ \\mathcal{{L}}\\left[{latex(expr)}\\right] = {latex(lap)}")
                     else:
-                        steps.append("Aplicando a Transformada Inversa de Laplace:")
+                        steps.append("\\textbf{Regra:}\\\\ \\mathcal{L}^{-1}[F(s)] = f(x)")
                         inv_lap = inverse_laplace_transform(expr, s, x)
-                        steps.append(f"Resultado: $\\mathcal{{L}}^{{-1}}\\left[{latex(expr)}\\right] = {latex(inv_lap)}$")
+                        steps.append(f"\\textbf{{Resultado final:}}\\\\ \\mathcal{{L}}^{{-1}}\\left[{latex(expr)}\\right] = {latex(inv_lap)}")
                     for s in steps:
                         st.latex(s)
                 
@@ -385,15 +388,14 @@ def main():
     
     with tab2:
         polynomial_solver()
-    
     with tab3:
         summation_calculator()
-    
+        summation_calculator()
     with tab4:
         advanced_calculator()
-    
+        advanced_calculator()
     with tab5:
         graphing_calculator()
-
+        graphing_calculator()
 if __name__ == "__main__":
     main()
