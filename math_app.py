@@ -86,18 +86,28 @@ def basic_calculator():
     
     if st.button("Calcular"):
         try:
+            x, y = symbols('x y')
+            expr = None
             if operation == "+":
+                expr = x + y
                 result = num1 + num2
             elif operation == "-":
+                expr = x - y
                 result = num1 - num2
             elif operation == "×":
+                expr = x * y
                 result = num1 * num2
             elif operation == "÷":
-                result = num1 / num2 if num2 != 0 else "Erro: divisão por zero"
+                expr = x / y
+                result = num1 / num2 if num2 != 0 else None
             elif operation == "^":
+                expr = x ** y
                 result = num1 ** num2
-            
-            st.success(f"Resultado: {result}")
+
+            if result is None:
+                st.error("Erro: divisão por zero")
+            else:
+                st.latex(f"{latex(expr.subs({x:num1, y:num2}))} = {latex(result)}")
         except Exception as e:
             st.error(f"Erro no cálculo: {str(e)}")
 
@@ -106,8 +116,8 @@ def polynomial_solver():
     st.subheader("Resolvedor de Equações Polinomiais")
     
     equation = st.text_input(
-        "Digite a equação polinomial (ex: x**2 - 4 = 0):",
-        placeholder="x**2 - 4 = 0"
+        "Digite a equação polinomial (ex: x^2 - 4 = 0):",
+        placeholder="x^2 - 4 = 0"
     )
     
     if st.button("Resolver Equação"):
@@ -116,6 +126,8 @@ def polynomial_solver():
         else:
             try:
                 x = symbols('x')
+                # Substitui ^ por ** para compatibilidade com sympy
+                equation = equation.replace('^', '**')
                 if '=' in equation:
                     lhs, rhs = equation.split('=')
                     expr = Eq(parse_expr(lhs), parse_expr(rhs))
@@ -130,7 +142,7 @@ def polynomial_solver():
                     st.markdown(f"""
                     <div class="math-result">
                         <b>Soluções da equação:</b><br><br>
-                        {', '.join([latex(sol) for sol in solutions])}
+                        {"<br>".join([f"${latex(x)} = {latex(sol)}$" for sol in solutions])}
                     </div>
                     """, unsafe_allow_html=True)
             except Exception as e:
@@ -143,7 +155,7 @@ def summation_calculator():
     col_expr, col_var, col_limits = st.columns([2, 1, 2])
     
     with col_expr:
-        sum_expr = st.text_input("Expressão do somatório:", placeholder="k**2")
+        sum_expr = st.text_input("Expressão do somatório:", placeholder="k^2")
     
     with col_var:
         sum_var = st.text_input("Variável do somatório:", value="k")
@@ -157,34 +169,44 @@ def summation_calculator():
             st.error("Por favor, preencha todos os campos.")
         else:
             try:
+                # Substitui ^ por ** para compatibilidade com sympy
+                sum_expr = sum_expr.replace('^', '**')
                 var = symbols(sum_var)
                 expr = parse_expr(sum_expr)
                 result = summation(expr, (var, lower, upper))
                 
-                st.markdown(f"""
-                <div class="math-result">
-                    <b>Resultado do somatório:</b><br><br>
-                    $\sum_{{{var}={lower}}}^{{{upper}}} {latex(expr)} = {latex(result)}$
-                </div>
-                """, unsafe_allow_html=True)
+                st.latex(
+                    rf"\sum_{{{latex(var)}={int(lower)}}}^{{{int(upper)}}} {latex(expr)} = {latex(result)}"
+                )
             except Exception as e:
                 st.error(f"Erro no cálculo do somatório: {str(e)}")
 
 def advanced_calculator():
-    """Calculadora avançada com derivadas, integrais e séries"""
+    """Calculadora avançada com derivadas, integrais, séries, limites, integrais parciais e transformações"""
     st.subheader("Calculadora Avançada")
     
     func_str = st.text_input(
         "Digite sua função matemática:", 
-        placeholder="Ex: x**2 + sin(x) - exp(x)",
+        placeholder="Ex: x^2 + sin(x) - exp(x)",
         key="adv_func"
     )
     
     operation = st.selectbox(
         "Operação:",
-        ("Derivada", "Integral Indefinida", "Integral Definida", "Série de Taylor"),
+        (
+            "Derivada",
+            "Integral Indefinida",
+            "Integral Definida",
+            "Integral Parcial",
+            "Limite",
+            "Série de Taylor",
+            "Transformação"
+        ),
         key="adv_operation"
     )
+    
+    x = symbols('x')
+    y = symbols('y')
     
     if operation == "Derivada":
         order = st.number_input("Ordem da derivada:", min_value=1, value=1, step=1, key="deriv_order")
@@ -206,69 +228,42 @@ def advanced_calculator():
             st.error("Por favor, insira uma função válida.")
         else:
             try:
-                x = symbols('x')
+                # Substitui ^ por ** para compatibilidade com sympy
+                func_str = func_str.replace('^', '**')
                 expr = parse_expr(func_str)
-                result = None
-                label = ""
                 
                 if operation == "Derivada":
-                    order_val = order if 'order' in locals() else 1
-                    result = diff(expr, x, order_val)
-                    label = f"Derivada de ordem {order_val}"
-                    st.markdown(f"""
-                    <div class="math-result">
-                        <b>{label}:</b><br><br>
-                        {latex(result, mode='inline')}
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if st.checkbox("Mostrar gráfico da derivada"):
-                        plot_function(result, x)
+                    result = diff(expr, x, order)
+                    st.latex(
+                        rf"\frac{{d^{order}}}{{dx^{order}}}\left({latex(expr)}\right) = {latex(result)}"
+                    )
                 
                 elif operation == "Integral Indefinida":
                     result = integrate(expr, x)
-                    label = "Integral Indefinida"
-                    st.markdown(f"""
-                    <div class="math-result">
-                        <b>{label}:</b><br><br>
-                        {latex(result, mode='inline')} + C
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if st.checkbox("Mostrar gráfico da integral indefinida"):
-                        plot_function(result, x)
+                    st.latex(
+                        rf"\int {latex(expr)}\,dx = {latex(result)} + C"
+                    )
                 
                 elif operation == "Integral Definida":
-                    a_expr = parse_expr(a)
-                    b_expr = parse_expr(b)
+                    a_expr = parse_expr(a.replace('^', '**'))
+                    b_expr = parse_expr(b.replace('^', '**'))
                     result = integrate(expr, (x, a_expr, b_expr))
-                    label = f"Integral Definida de {a} a {b}"
-                    st.markdown(f"""
-                    <div class="math-result">
-                        <b>{label}:</b><br><br>
-                        {latex(result, mode='inline')}
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.checkbox("Mostrar gráfico da função original"):
-                        plot_function(expr, x)
+                    st.latex(
+                        rf"\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} {latex(expr)}\,dx = {latex(result)}"
+                    )
                 
                 elif operation == "Série de Taylor":
-                    x0_expr = parse_expr(x0)
-                    n_val = n if 'n' in locals() else 4
-                    result = series(expr, x, x0_expr, n_val).removeO()
-                    label = f"Série de Taylor em x={x0} até ordem {n_val}"
-                    st.markdown(f"""
-                    <div class="math-result">
-                        <b>{label}:</b><br><br>
-                        {latex(result, mode='inline')}
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if st.checkbox("Mostrar gráfico da série de Taylor"):
-                        plot_function(result, x)
+                    x0_expr = parse_expr(x0.replace('^', '**'))
+                    result = series(expr, x, x0_expr, n).removeO()
+                    st.latex(
+                        rf"\text{{Série de Taylor de }} {latex(expr)} \text{{ em }} x={latex(x0_expr)} \text{{ até ordem }} {n}:"
+                    )
+                    st.latex(latex(result))
                 
-                # Continua mostrando o gráfico da função original
-                if st.checkbox("Mostrar gráfico da função original"):
+                # Opção para plotar a função
+                if st.checkbox("Mostrar gráfico desta função"):
                     plot_function(expr, x)
-
+            
             except Exception as e:
                 st.error(f"Erro no cálculo: {str(e)}")
 
@@ -298,6 +293,8 @@ def graphing_calculator():
             st.error("Por favor, insira uma função válida.")
         else:
             try:
+                # Substitui ^ por ** para compatibilidade com sympy
+                func_str = func_str.replace('^', '**')
                 x = symbols('x')
                 expr = parse_expr(func_str)
                 plot_function(expr, x, (x_min, x_max), points)
