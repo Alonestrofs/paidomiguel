@@ -182,153 +182,128 @@ def summation_calculator():
                 st.error(f"Erro no cálculo do somatório: {str(e)}")
 
 def advanced_calculator():
-    """Calculadora avançada com derivadas, integrais, séries, limites, integrais parciais e transformações"""
-    st.subheader("Calculadora Avançada")
-    
-    func_str = st.text_input(
-        "Digite sua função matemática:", 
-        placeholder="Ex: x^2 + sin(x) - exp(x)",
-        key="adv_func"
-    )
-    
-    operation = st.selectbox(
-        "Operação:",
-        (
-            "Derivada",
-            "Integral Indefinida",
-            "Integral Definida",
-            "Integral Parcial",
-            "Limite",
-            "Série de Taylor",
-            "Transformação"
-        ),
-        key="adv_operation"
-    )
-    
-    x = symbols('x')
-    y = symbols('y')
-    
-    # Campos extras conforme operação
-    if operation == "Derivada":
-        order = st.number_input("Ordem da derivada:", min_value=1, value=1, step=1, key="deriv_order")
-    elif operation == "Integral Definida":
-        col_a, col_b = st.columns(2)
-        with col_a:
-            a = st.text_input("Limite inferior (a):", value="0", key="int_a")
-        with col_b:
-            b = st.text_input("Limite superior (b):", value="1", key="int_b")
-    elif operation == "Integral Parcial":
-        var = st.selectbox("Variável de integração:", ("x", "y"), key="partial_var")
-        lower = st.text_input("Limite inferior:", value="0", key="partial_lower")
-        upper = st.text_input("Limite superior:", value="1", key="partial_upper")
-    elif operation == "Limite":
-        var = st.selectbox("Variável:", ("x", "y"), key="lim_var")
-        point = st.text_input("Ponto de aproximação:", value="0", key="lim_point")
-        direction = st.selectbox("Direção:", ("ambos", "+", "-"), key="lim_dir")
-    elif operation == "Série de Taylor":
-        col_x0, col_n = st.columns(2)
-        with col_x0:
-            x0 = st.text_input("Ponto (x0):", value="0", key="taylor_x0")
-        with col_n:
-            n = st.number_input("Ordem (n):", min_value=1, value=4, step=1, key="taylor_n")
-    elif operation == "Transformação":
-        transf = st.selectbox("Tipo de transformação:", ("Laplace", "Inversa de Laplace"), key="transf_type")
-        s = symbols('s')
-    
-    if st.button("Calcular", key="adv_calc"):
-        if not func_str:
-            st.error("Por favor, insira uma função válida.")
-        else:
-            try:
-                func_str = func_str.replace('^', '**')
-                expr = parse_expr(func_str)
-                steps = []
+    """Calculadora avançada com passo a passo, separada em abas"""
+    st.subheader("Cálculos Avançados - Passo a Passo")
 
-                if operation == "Derivada":
-                    # Passo 1: Mostra a função original
+    tabs = st.tabs([
+        "Derivada", 
+        "Integral", 
+        "Limite", 
+        "Série de Taylor", 
+        "Transformação"
+    ])
+
+    # Tab: Derivada
+    with tabs[0]:
+        func_str = st.text_input("Função para derivar:", placeholder="Ex: x^2 + sin(x)", key="deriv_func")
+        order = st.number_input("Ordem da derivada:", min_value=1, value=1, step=1, key="deriv_order")
+        if st.button("Calcular derivada", key="deriv_calc"):
+            if func_str:
+                try:
+                    func_str = func_str.replace('^', '**')
+                    expr = parse_expr(func_str)
+                    steps = []
                     steps.append(f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}")
-                    # Passo 2: Mostra a regra da derivada
                     steps.append(f"\\textbf{{Regra:}}\\\\ \\frac{{d^{{{order}}}}}{{dx^{{{order}}}}} f(x)")
-                    # Passo 3: Calcula a derivada
-                    deriv = diff(expr, x, order)
-                    steps.append(f"\\textbf{{Aplicando a regra:}}\\\\ \\frac{{d^{{{order}}}}}{{dx^{{{order}}}}}({latex(expr)}) = {latex(deriv)}")
-                    # Passo 4: Resultado final
+                    deriv = diff(expr, Symbol('x'), order)
                     steps.append(f"\\textbf{{Resultado final:}}\\\\ f^{{({order})}}(x) = {latex(deriv)}")
                     for s in steps:
                         st.latex(s)
+                except Exception as e:
+                    st.error(f"Erro no cálculo: {str(e)}")
 
-                elif operation == "Integral Indefinida":
-                    steps.append(f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}")
-                    steps.append(f"\\textbf{{Regra:}}\\\\ \\int f(x)\\,dx")
-                    intg = integrate(expr, x)
-                    steps.append(f"\\textbf{{Primitiva:}}\\\\ F(x) = {latex(intg)} + C")
-                    steps.append(f"\\textbf{{Resultado final:}}\\\\ \\int {latex(expr)}\\,dx = {latex(intg)} + C")
-                    for s in steps:
-                        st.latex(s)
-
-                elif operation == "Integral Definida":
-                    a_expr = parse_expr(a.replace('^', '**'))
-                    b_expr = parse_expr(b.replace('^', '**'))
-                    steps.append(f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}")
-                    steps.append(f"\\textbf{{Regra:}}\\\\ \\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} f(x)\\,dx")
-                    F = integrate(expr, x)
-                    steps.append(f"\\textbf{{Primitiva:}}\\\\ F(x) = {latex(F)}")
-                    Fb = F.subs(x, b_expr)
-                    Fa = F.subs(x, a_expr)
-                    steps.append(f"\\textbf{{Avaliação nos limites:}}\\\\ F({latex(b_expr)}) - F({latex(a_expr)}) = {latex(Fb)} - {latex(Fa)}")
-                    result = integrate(expr, (x, a_expr, b_expr))
-                    steps.append(f"\\textbf{{Resultado final:}}\\\\ \\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} {latex(expr)}\\,dx = {latex(result)}")
-                    for s in steps:
-                        st.latex(s)
-
-                elif operation == "Integral Parcial":
-                    var_sym = symbols(var)
-                    lower_expr = parse_expr(lower.replace('^', '**'))
-                    upper_expr = parse_expr(upper.replace('^', '**'))
-                    steps.append(f"\\textbf{{Função original:}}\\\\ f({latex(var_sym)}) = {latex(expr)}")
-                    steps.append(f"\\textbf{{Regra:}}\\\\ \\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} f({latex(var_sym)})\\,d{latex(var_sym)}")
-                    F = integrate(expr, var_sym)
-                    steps.append(f"\\textbf{{Primitiva:}}\\\\ F({latex(var_sym)}) = {latex(F)}")
-                    Fb = F.subs(var_sym, upper_expr)
-                    Fa = F.subs(var_sym, lower_expr)
-                    steps.append(f"\\textbf{{Avaliação nos limites:}}\\\\ F({latex(upper_expr)}) - F({latex(lower_expr)}) = {latex(Fb)} - {latex(Fa)}")
-                    result = integrate(expr, (var_sym, lower_expr, upper_expr))
-                    steps.append(f"\\textbf{{Resultado final:}}\\\\ \\int_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} {latex(expr)}\\,d{latex(var_sym)} = {latex(result)}")
-                    for s in steps:
-                        st.latex(s)
-
-                elif operation == "Limite":
-                    var_sym = symbols(var)
-                    point_expr = parse_expr(point.replace('^', '**'))
-                    dir_map = {"ambos": None, "+": "+", "-": "-"}
-                    steps.append(f"\\textbf{{Função original:}}\\\\ f({latex(var_sym)}) = {latex(expr)}")
-                    steps.append(f"\\textbf{{Regra:}}\\\\ \\lim_{{{latex(var_sym)} \\to {latex(point_expr)}}} f({latex(var_sym)})")
-                    lim_result = limit(expr, var_sym, point_expr, dir_map[direction])
-                    steps.append(f"\\textbf{{Resultado final:}}\\\\ \\lim_{{{latex(var_sym)} \\to {latex(point_expr)}}} {latex(expr)} = {latex(lim_result)}")
-                    for s in steps:
-                        st.latex(s)
-
-                elif operation == "Série de Taylor":
-                    x0_expr = parse_expr(x0.replace('^', '**'))
-                    steps.append(f"Função original: $f(x) = {latex(expr)}$")
-                    steps.append(f"Expandindo em série de Taylor em $x_0 = {latex(x0_expr)}$ até ordem $n = {n}$:")
-                    result = series(expr, x, x0_expr, n).removeO()
-                    steps.append(f"Série de Taylor: ${latex(result)}$")
-                    for s in steps:
-                        st.latex(s)
-                
-                elif operation == "Transformação":
-                    steps.append(f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}")
-                    if transf == "Laplace":
-                        steps.append("\\textbf{Regra:}\\\\ \\mathcal{L}[f(x)] = F(s)")
-                        lap = laplace_transform(expr, x, s, noconds=True)
-                        steps.append(f"\\textbf{{Resultado final:}}\\\\ \\mathcal{{L}}\\left[{latex(expr)}\\right] = {latex(lap)}")
+    # Tab: Integral
+    with tabs[1]:
+        func_str = st.text_input("Função para integrar:", placeholder="Ex: x^2 + sin(x)", key="int_func")
+        int_type = st.radio("Tipo de integral:", ["Indefinida", "Definida"], key="int_type")
+        if int_type == "Definida":
+            a = st.text_input("Limite inferior (a):", value="0", key="int_a")
+            b = st.text_input("Limite superior (b):", value="1", key="int_b")
+        if st.button("Calcular integral", key="int_calc"):
+            if func_str:
+                try:
+                    func_str = func_str.replace('^', '**')
+                    expr = parse_expr(func_str)
+                    steps = [f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}"]
+                    if int_type == "Indefinida":
+                        intg = integrate(expr, Symbol('x'))
+                        steps.append(f"\\textbf{{Resultado final:}}\\\\ \\int {latex(expr)} dx = {latex(intg)} + C")
                     else:
-                        steps.append("\\textbf{Regra:}\\\\ \\mathcal{L}^{-1}[F(s)] = f(x)")
-                        inv_lap = inverse_laplace_transform(expr, s, x)
-                        steps.append(f"\\textbf{{Resultado final:}}\\\\ \\mathcal{{L}}^{{-1}}\\left[{latex(expr)}\\right] = {latex(inv_lap)}")
+                        a_expr = parse_expr(a.replace('^','**'))
+                        b_expr = parse_expr(b.replace('^','**'))
+                        F = integrate(expr, Symbol('x'))
+                        Fb = F.subs(Symbol('x'), b_expr)
+                        Fa = F.subs(Symbol('x'), a_expr)
+                        result = integrate(expr, (Symbol('x'), a_expr, b_expr))
+                        steps.append(f"\\textbf{{Primitiva:}}\\\\ F(x) = {latex(F)}")
+                        steps.append(f"\\textbf{{Avaliação nos limites:}}\\\\ F({latex(b_expr)}) - F({latex(a_expr)}) = {latex(Fb)} - {latex(Fa)}")
+                        steps.append(f"\\textbf{{Resultado final:}}\\\\ {latex(result)}")
                     for s in steps:
                         st.latex(s)
+                except Exception as e:
+                    st.error(f"Erro no cálculo: {str(e)}")
+
+    # Tab: Limite
+    with tabs[2]:
+        func_str = st.text_input("Função para limite:", placeholder="Ex: sin(x)/x", key="lim_func")
+        point = st.text_input("Ponto de aproximação:", value="0", key="lim_point")
+        direction = st.selectbox("Direção:", ["ambos", "+", "-"], key="lim_dir")
+        if st.button("Calcular limite", key="lim_calc"):
+            if func_str:
+                try:
+                    expr = parse_expr(func_str.replace('^','**'))
+                    var = Symbol('x')
+                    point_expr = parse_expr(point.replace('^','**'))
+                    dir_map = {"ambos": None, "+": "+", "-": "-"}
+                    result = limit(expr, var, point_expr, dir_map[direction])
+                    steps = [
+                        f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}",
+                        f"\\textbf{{Resultado final:}}\\\\ \\lim_{{x \\to {latex(point_expr)}}} f(x) = {latex(result)}"
+                    ]
+                    for s in steps:
+                        st.latex(s)
+                except Exception as e:
+                    st.error(f"Erro no cálculo: {str(e)}")
+
+    # Tab: Série de Taylor
+    with tabs[3]:
+        func_str = st.text_input("Função:", placeholder="Ex: exp(x)", key="taylor_func")
+        x0 = st.text_input("Ponto (x0):", value="0", key="taylor_x0")
+        n = st.number_input("Ordem (n):", min_value=1, value=4, step=1, key="taylor_n")
+        if st.button("Calcular série", key="taylor_calc"):
+            if func_str:
+                try:
+                    expr = parse_expr(func_str.replace('^','**'))
+                    x0_expr = parse_expr(x0.replace('^','**'))
+                    result = series(expr, Symbol('x'), x0_expr, n).removeO()
+                    steps = [
+                        f"\\textbf{{Função original:}}\\\\ f(x) = {latex(expr)}",
+                        f"\\textbf{{Série de Taylor até ordem {n} em x0={latex(x0_expr)}:}}",
+                        f"{latex(result)}"
+                    ]
+                    for s in steps:
+                        st.latex(s)
+                except Exception as e:
+                    st.error(f"Erro no cálculo: {str(e)}")
+
+    # Tab: Transformação
+    with tabs[4]:
+        func_str = st.text_input("Função:", placeholder="Ex: exp(-2*x)", key="transf_func")
+        transf_type = st.selectbox("Tipo de transformação:", ["Laplace", "Inversa de Laplace"], key="transf_type")
+        if st.button("Calcular transformação", key="transf_calc"):
+            if func_str:
+                try:
+                    expr = parse_expr(func_str.replace('^','**'))
+                    s = Symbol('s')
+                    if transf_type == "Laplace":
+                        lap = laplace_transform(expr, Symbol('x'), s, noconds=True)
+                        st.latex(f"\\mathcal{{L}}[{latex(expr)}] = {latex(lap)}")
+                    else:
+                        inv = inverse_laplace_transform(expr, s, Symbol('x'))
+                        st.latex(f"\\mathcal{{L}}^{{-1}}[{latex(expr)}] = {latex(inv)}")
+                except Exception as e:
+                    st.error(f"Erro no cálculo: {str(e)}")
+
                 
                 # Opção para plotar a função
                 if operation not in ("Transformação", "Limite") and st.checkbox("Mostrar gráfico desta função"):
@@ -390,9 +365,12 @@ def main():
         polynomial_solver()
     with tab3:
         summation_calculator()
+        summation_calculator()
     with tab4:
         advanced_calculator()
+        advanced_calculator()
     with tab5:
+        graphing_calculator()
         graphing_calculator()
 if __name__ == "__main__":
     main()
