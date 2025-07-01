@@ -288,29 +288,22 @@ def advanced_calculator():
 
     # Tab: Transformação
     with tabs[4]:
-        func_str = st.text_input("Função:", placeholder="Ex: exp(-2*x)", key="transf_func")
-        transf_type = st.selectbox("Tipo de transformação:", ["Laplace", "Inversa de Laplace"], key="transf_type")
-        if st.button("Calcular transformação", key="transf_calc"):
-            if func_str:
-                try:
-                    expr = parse_expr(func_str.replace('^','**'))
-                    s = Symbol('s')
-                    if transf_type == "Laplace":
-                        lap = laplace_transform(expr, Symbol('x'), s, noconds=True)
-                        st.latex(f"\\mathcal{{L}}[{latex(expr)}] = {latex(lap)}")
-                    else:
-                        inv = inverse_laplace_transform(expr, s, Symbol('x'))
-                        st.latex(f"\\mathcal{{L}}^{{-1}}[{latex(expr)}] = {latex(inv)}")
-                except Exception as e:
-                    st.error(f"Erro no cálculo: {str(e)}")
+    func_str = st.text_input("Função:", placeholder="Ex: exp(-2*x)", key="transf_func")
+    transf_type = st.selectbox("Tipo de transformação:", ["Laplace", "Inversa de Laplace"], key="transf_type")
+    if st.button("Calcular transformação", key="transf_calc"):
+        if func_str:
+            try:
+                expr = parse_expr(func_str.replace('^','**'))
+                s = Symbol('s')
+                if transf_type == "Laplace":
+                    lap = laplace_transform(expr, Symbol('x'), s, noconds=True)
+                    st.latex(f"\\mathcal{{L}}[{latex(expr)}] = {latex(lap)}")
+                else:
+                    inv = inverse_laplace_transform(expr, s, Symbol('x'))
+                    st.latex(f"\\mathcal{{L}}^{{-1}}[{latex(expr)}] = {latex(inv)}")
+            except Exception as e:
+                st.error(f"Erro no cálculo: {str(e)}")
 
-                
-                # Opção para plotar a função
-                if operation not in ("Transformação", "Limite") and st.checkbox("Mostrar gráfico desta função"):
-                    plot_function(expr, x)
-            
-                except Exception as e:
-                    st.error(f"Erro no cálculo: {str(e)}")
 
 def graphing_calculator():
     """Calculadora gráfica"""
