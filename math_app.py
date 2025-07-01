@@ -309,8 +309,8 @@ def advanced_calculator():
                 if operation not in ("Transformação", "Limite") and st.checkbox("Mostrar gráfico desta função"):
                     plot_function(expr, x)
             
-            except Exception as e:
-                st.error(f"Erro no cálculo: {str(e)}")
+                except Exception as e:
+                    st.error(f"Erro no cálculo: {str(e)}")
 
 def graphing_calculator():
     """Calculadora gráfica"""
