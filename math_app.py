@@ -202,8 +202,8 @@ def advanced_calculator():
             n = st.number_input("Ordem (n):", min_value=1, value=4, step=1, key="taylor_n")
     
     if st.button("Calcular", key="adv_calc"):
-    if not func_str:
-        st.error("Por favor, insira uma função válida.")
+        if not func_str:
+            st.error("Por favor, insira uma função válida.")
     else:
         try:
             x = symbols('x')
