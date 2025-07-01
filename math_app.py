@@ -2,7 +2,8 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from sympy import (symbols, diff, integrate, series, parse_expr, sin, cos, tan, 
-                  exp, log, sqrt, latex, solve, summation, Eq, Symbol, lambdify, limit, laplace_transform, inverse_laplace_transform, apart, together, simplify, expand, pretty)
+                  exp, log, sqrt, latex, solve, summation, Eq, Symbol, lambdify, 
+                  limit, laplace_transform, inverse_laplace_transform, apart, together, simplify, expand, pretty, Add, Mul)
 from sympy.parsing.sympy_parser import parse_expr
 
 # Configuração da página
