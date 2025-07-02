@@ -8,7 +8,7 @@ from sympy.parsing.sympy_parser import parse_expr
 
 # Configuração da página
 st.set_page_config(
-    page_title="Calculadora Avançada Pro",
+    page_title="Calculadora Braba",
     page_icon="🧮",
     layout="centered",
     initial_sidebar_state="expanded"
