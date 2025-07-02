@@ -4,7 +4,7 @@ Uma aplicação web interativa construída com **Streamlit**, que oferece vária
 ✅ Calculadora básica,  
 ✅ Resolvedor de equações polinomiais,  
 ✅ Calculadora de somatórios,  
-✅ Derivadas, integrais, séries de Taylor,  
+✅ Derivadas, integrais, séries de Taylor, transformações.
 ✅ Plotagem de gráficos de funções.
 
 ---
