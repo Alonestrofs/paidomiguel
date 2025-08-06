@@ -6,9 +6,25 @@ from sympy import (symbols, diff, integrate, series, parse_expr, sin, cos, tan,
                   limit, laplace_transform, inverse_laplace_transform, apart, together, simplify, expand, pretty, Add, Mul)
 from sympy.parsing.sympy_parser import parse_expr
 
+def render_katex(latex_str, height=80):
+    """Renderiza uma string LaTeX usando KaTeX via HTML"""
+    html = f"""
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {{
+            delimiters: [
+                {{left: '$$', right: '$$', display: true}},
+                {{left: '$', right: '$', display: false}}
+            ]
+        }});"></script>
+    <div style="font-size: 20px;">$$ {latex_str} $$</div>
+    """
+    components.html(html, height=height)
+
 # Configuração da página
 st.set_page_config(
-    page_title="Calculadora Braba",
+    page_title="Calculadora Avançada Pro",
     page_icon="🧮",
     layout="centered",
     initial_sidebar_state="expanded"
@@ -194,7 +210,7 @@ def advanced_calculator():
         "Transformação"
     ])
 
-    # Tab: Derivada
+# Tab: Derivada
     with tabs[0]:
         func_str = st.text_input("Função para derivar:", placeholder="Ex: x^2 + sin(x)", key="deriv_func")
         order = st.number_input("Ordem da derivada:", min_value=1, value=1, step=1, key="deriv_order")
@@ -202,30 +218,33 @@ def advanced_calculator():
             if func_str:
                 try:
                     expr = parse_expr(func_str.replace('^', '**'))
-                    x = Symbol('x')
-                    steps = [f"Função original: $f(x) = {latex(expr)}$"]
+                    x = symbols('x')
+                    steps = [f"Função original: f(x) = {latex(expr)}"]
+
                     if isinstance(expr, Add):
-                        steps.append("Aplicar a regra da soma: $(f+g)' = f' + g'$")
-                        partials = []
+                        steps.append(r"Aplicar a regra da soma: (f+g)' = f' + g'")
                         for arg in expr.args:
                             d = diff(arg, x, order)
-                            partials.append(f"$\\frac{{d^{{{order}}}}}{{dx^{{{order}}}}}({latex(arg)}) = {latex(d)}$")
-                        steps += partials
+                            steps.append(rf"\frac{{d^{order}}}{{dx^{order}}}({latex(arg)}) = {latex(d)}")
                     elif isinstance(expr, Mul):
-                        steps.append("Aplicar a regra do produto: $(u\\cdot v)' = u'v + uv'$")
+                        steps.append(r"Aplicar a regra do produto: (uv)' = u'v + uv'")
                         u, v = expr.args
                         du = diff(u, x, order)
                         dv = diff(v, x, order)
-                        steps.append(f"$u = {latex(u)}, u' = {latex(du)}$")
-                        steps.append(f"$v = {latex(v)}, v' = {latex(dv)}$")
+                        steps.append(rf"u = {latex(u)}, \ u' = {latex(du)}")
+                        steps.append(rf"v = {latex(v)}, \ v' = {latex(dv)}")
                         deriv = du*v + u*dv
-                        steps.append(f"Resultado: $u'v + uv' = {latex(deriv)}$")
+                        steps.append(rf"Resultado: u'v + uv' = {latex(deriv)}")
                     else:
                         deriv = diff(expr, x, order)
-                        steps.append(f"Derivando diretamente: $f^{{({order})}}(x) = {latex(deriv)}$")
-                    steps.append(f"Resultado final simplificado: ${latex(simplify(deriv))}$")
+                        steps.append(rf"Derivando diretamente: f^{{({order})}}(x) = {latex(deriv)}")
+
+                    steps.append(rf"Resultado final simplificado: {latex(simplify(deriv))}")
+
+                    # Renderizar todos os passos com KaTeX
                     for s in steps:
-                        st.latex(s)
+                        render_katex(s, height=60)
+
                 except Exception as e:
                     st.error(f"Erro no cálculo: {str(e)}")
 
