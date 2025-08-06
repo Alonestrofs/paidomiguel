@@ -238,7 +238,7 @@ def advanced_calculator():
                         steps.append(rf"Resultado: u'v + uv' = {latex(deriv)}")
                     else:
                         deriv = diff(expr, x, order)
-                        steps.append(rf"Derivando diretamente: f^{{({order})}}(x) = {latex(deriv)}")
+                        steps.append(rf"Derivando diretamente: $$f^{{({order})}}(x) = {latex(deriv)}$$")
 
                     steps.append(rf"Resultado final simplificado: $${latex(simplify(deriv))}$$")
 
