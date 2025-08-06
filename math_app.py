@@ -19,7 +19,7 @@ def render_katex(latex_str, height=80):
                 {{left: '$', right: '$', display: false}}
             ]
         }});"></script>
-    <div style="font-size: 20px;">$$ {latex_str} $$</div>
+    <div style="font-size: 20px;">{latex_str}</div>
     """
     components.html(html, height=height)
 
@@ -64,7 +64,7 @@ div.stButton > button:hover {
     margin-top: 30px;
 }
 .tab-content {
-    padding: 20px 0;
+    padding: 20px 0;finalsimplificado:0
 }
 </style>
 """, unsafe_allow_html=True)
@@ -240,7 +240,7 @@ def advanced_calculator():
                         deriv = diff(expr, x, order)
                         steps.append(rf"Derivando diretamente: f^{{({order})}}(x) = {latex(deriv)}")
 
-                    steps.append(rf"Resultado final simplificado: {latex(simplify(deriv))}")
+                    steps.append(rf"Resultado final simplificado: $${latex(simplify(deriv))}$$")
 
                     # Renderizar todos os passos com KaTeX
                     for s in steps:
