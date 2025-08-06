@@ -7,6 +7,7 @@ Uma aplicação web interativa construída com **Streamlit**, que oferece vária
 ✅ Derivadas, integrais, séries de Taylor, transformações.
 ✅ Plotagem de gráficos de funções.
 
+
 ---
 
 ## ✨ Funcionalidades
