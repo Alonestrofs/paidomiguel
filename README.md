@@ -23,8 +23,8 @@ Uma aplicação web interativa construída com **Streamlit**, que oferece vária
 ## 📦 Bibliotecas utilizadas
 
 - [Streamlit](https://streamlit.io/) – para construir a interface web.
-- [SymPy](https://www.sympy.org/) – para cálculos simbólicos.
-- [NumPy](https://numpy.org/) – para arrays e funções numéricas.
+- [SymPy](https://www.sympy.org/)
+- [NumPy](https://numpy.org/)
 - [Matplotlib](https://matplotlib.org/) – para plotagem de gráficos.
 
 ---
