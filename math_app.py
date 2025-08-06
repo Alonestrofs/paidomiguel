@@ -5,6 +5,7 @@ from sympy import (symbols, diff, integrate, series, parse_expr, sin, cos, tan,
                   exp, log, sqrt, latex, solve, summation, Eq, Symbol, lambdify, 
                   limit, laplace_transform, inverse_laplace_transform, apart, together, simplify, expand, pretty, Add, Mul)
 from sympy.parsing.sympy_parser import parse_expr
+import streamlit.components.v1 as components
 
 def render_katex(latex_str, height=80):
     """Renderiza uma string LaTeX usando KaTeX via HTML"""
