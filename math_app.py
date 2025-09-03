@@ -281,233 +281,186 @@ def summation_calculator():
                 st.error(f"❌ **Erro no cálculo do somatório:** {str(e)}")
 
 def advanced_calculator():
-    """Calculadora avançada com passo a passo usando KaTeX"""
-    st.subheader("Cálculos Avançados - Passo a Passo")
+    st.header("Cálculos Avançados com Passo a Passo")
+    tabs = st.tabs(["Derivada", "Integral", "Limite", "Série de Taylor", "Transformada de Laplace"])
 
-    tabs = st.tabs([
-        "Derivada", 
-        "Integral", 
-        "Limite", 
-        "Série de Taylor", 
-        "Transformação"
-    ])
-
-    # Tab: Derivada
-    with tabs[0]:
-        func_str = st.text_input("Função para derivar:", placeholder="Ex: x^2 + sin(x)", key="deriv_func")
-        order = st.number_input("Ordem da derivada:", min_value=1, value=1, step=1, key="deriv_order")
-        
-        if st.button("Calcular derivada", key="deriv_calc"):
-            if func_str:
-                try:
-                    expr = parse_expr(func_str.replace('^', '**'))
-                    x = symbols('x')
+    with tabs[0]: # Derivada
+        func_str = st.text_input("Função para derivar f(x):", "x**3 * cos(x)", key="deriv_func")
+        order = st.number_input("Ordem da derivada:", 1, 10, 1, key="deriv_order")
+        if st.button("Calcular Derivada", key="deriv_calc"):
+            try:
+                x = symbols('x')
+                expr = parse_expr(func_str.replace('^', '**'))
+                steps = [f"Vamos calcular a derivada de ordem {order} da função:"]
+                steps.append(f"$$f(x) = {latex(expr)}$$")
+                
+                current_expr = expr
+                for i in range(1, order + 1):
+                    deriv = diff(current_expr, x)
+                    if isinstance(current_expr, Add):
+                        steps.append(f"**{i}ª Derivada:** Aplicando a Regra da Soma: $(u+v)' = u' + v'$.")
+                        # O Sympy faz isso automaticamente.
+                    elif isinstance(current_expr, Mul) and len(current_expr.args) == 2:
+                        u, v = current_expr.args
+                        du, dv = diff(u, x), diff(v, x)
+                        steps.append(f"**{i}ª Derivada:** Aplicando a Regra do Produto: $(u \\cdot v)' = u' \\cdot v + u \\cdot v'$.")
+                        steps.append(f"Onde $u = {latex(u)}$ e $v = {latex(v)}$.")
+                        steps.append(f"As derivadas são $u' = {latex(du)}$ e $v' = {latex(dv)}$.")
+                        steps.append("Substituindo na fórmula:")
+                        steps.append(f"$$f^{{({i})}}(x) = ({latex(du)}) \\cdot ({latex(v)}) + ({latex(u)}) \\cdot ({latex(dv)})$$")
+                    elif isinstance(current_expr, Pow):
+                        base, exp_val = current_expr.args
+                        if x in base.free_symbols and x not in exp_val.free_symbols:
+                            steps.append(f"**{i}ª Derivada:** Aplicando a Regra da Potência: $(u^n)' = n \\cdot u^{{n-1}} \\cdot u'$.")
+                        elif x in exp_val.free_symbols:
+                             steps.append(f"**{i}ª Derivada:** Aplicando a Regra da Exponencial e/ou Cadeia.")
                     
-                    steps = []
-                    steps.append("**Cálculo da Derivada:**")
-                    steps.append(f"$$f(x) = {latex(expr)}$$")
-                    
-                    if order == 1:
-                        steps.append(f"$$\\text{{Calculando: }} \\frac{{df}}{{dx}}$$")
-                    else:
-                        steps.append(f"$$\\text{{Calculando: }} \\frac{{d^{order}f}}{{dx^{order}}}$$")
+                    simplified = simplify(deriv)
+                    if order > 1:
+                        steps.append(f"O resultado da {i}ª derivada é:")
+                        steps.append(f"$$\\frac{{d^{i}}}{{dx^{i}}} f(x) = {latex(simplified)}$$")
+                    current_expr = deriv
 
-                    # Análise por tipo de função
-                    if isinstance(expr, Add):
-                        steps.append("**Aplicando a regra da soma:** $(f+g)' = f' + g'$")
-                        for arg in expr.args:
-                            d = diff(arg, x, order)
-                            steps.append(f"$$\\frac{{d^{order}}}{{dx^{order}}}\\left({latex(arg)}\\right) = {latex(d)}$$")
-                    elif isinstance(expr, Mul):
-                        if len(expr.args) == 2:
-                            steps.append("**Aplicando a regra do produto:** $(uv)' = u'v + uv'$")
-                            u, v = expr.args
-                            du = diff(u, x, 1)
-                            dv = diff(v, x, 1)
-                            steps.append(f"$$u = {latex(u)}, \\quad u' = {latex(du)}$$")
-                            steps.append(f"$$v = {latex(v)}, \\quad v' = {latex(dv)}$$")
-                            if order == 1:
-                                result_product = du*v + u*dv
-                                steps.append(f"$$f'(x) = u'v + uv' = {latex(result_product)}$$")
-                    
-                    # Resultado final
-                    final_deriv = diff(expr, x, order)
-                    simplified = simplify(final_deriv)
-                    
-                    steps.append("**Resultado:**")
-                    if order == 1:
-                        steps.append(f"$$f'(x) = {latex(final_deriv)}$$")
-                    else:
-                        steps.append(f"$$f^{{({order})}}(x) = {latex(final_deriv)}$$")
-                    
-                    if final_deriv != simplified:
-                        steps.append("**Simplificado:**")
-                        if order == 1:
-                            steps.append(f"$$f'(x) = {latex(simplified)}$$")
-                        else:
-                            steps.append(f"$$f^{{({order})}}(x) = {latex(simplified)}$$")
+                final_deriv = diff(expr, x, order)
+                final_simplified = simplify(final_deriv)
+                
+                steps.append("**Resultado Final:**")
+                d_symbol = f"f^{{({order})}}(x)" if order > 1 else "f'(x)"
+                steps.append(f"$${d_symbol} = {latex(final_deriv)}$$")
 
-                    render_katex_steps(steps)
+                if final_deriv != final_simplified:
+                    steps.append("Após simplificação, obtemos:")
+                    steps.append(f"$${d_symbol} = {latex(final_simplified)}$$")
+                
+                render_katex_steps(steps, "Cálculo da Derivada")
 
-                except Exception as e:
-                    st.error(f"❌ **Erro no cálculo:** {str(e)}")
+            except Exception as e:
+                st.error(f"❌ **Erro no cálculo:** {e}")
 
-    # Tab: Integral
-    with tabs[1]:
-        func_str = st.text_input("Função para integrar:", placeholder="Ex: x^2 + sin(x)", key="int_func")
-        int_type = st.radio("Tipo de integral:", ["Indefinida", "Definida"], key="int_type")
-        
+    with tabs[1]: # Integral
+        func_str = st.text_input("Função para integrar f(x):", "x**2 + sin(x)", key="int_func")
+        int_type = st.radio("Tipo de integral:", ["Indefinida", "Definida"], key="int_type", horizontal=True)
+        a, b = "0", "1"
         if int_type == "Definida":
             col_a, col_b = st.columns(2)
-            with col_a:
-                a = st.text_input("Limite inferior (a):", value="0", key="int_a")
-            with col_b:
-                b = st.text_input("Limite superior (b):", value="1", key="int_b")
+            a = col_a.text_input("Limite inferior (a):", "0", key="int_a")
+            b = col_b.text_input("Limite superior (b):", "1", key="int_b")
         
-        if st.button("Calcular integral", key="int_calc"):
-            if func_str:
-                try:
-                    expr = parse_expr(func_str.replace('^', '**'))
-                    x = Symbol('x')
-                    
-                    steps = []
-                    steps.append("**Cálculo da Integral:**")
-                    steps.append(f"$$f(x) = {latex(expr)}$$")
-                    
-                    if int_type == "Indefinida":
-                        steps.append("$$\\text{Calculando: } \\int f(x) \\, dx$$")
-                    else:
-                        steps.append(f"$$\\text{{Calculando: }} \\int_{{{a}}}^{{{b}}} f(x) \\, dx$$")
-                    
-                    # Análise por partes se for soma
-                    if isinstance(expr, Add):
-                        steps.append("**Aplicando a linearidade:** $\\int(f+g)dx = \\int f dx + \\int g dx$")
-                        for arg in expr.args:
-                            integ = integrate(arg, x)
-                            steps.append(f"$$\\int {latex(arg)} \\, dx = {latex(integ)}$$")
-                    
-                    # Calcular a primitiva
-                    primitive = integrate(expr, x)
-                    steps.append("**Primitiva:**")
-                    steps.append(f"$$F(x) = {latex(primitive)}$$")
-                    
-                    if int_type == "Indefinida":
-                        steps.append("**Resultado final:**")
-                        steps.append(f"$$\\int {latex(expr)} \\, dx = {latex(primitive)} + C$$")
-                    else:
-                        # Integral definida
-                        a_expr = parse_expr(a.replace('^', '**'))
-                        b_expr = parse_expr(b.replace('^', '**'))
-                        
-                        Fa = primitive.subs(x, a_expr)
-                        Fb = primitive.subs(x, b_expr)
-                        result = Fb - Fa
-                        
-                        steps.append("**Aplicando o Teorema Fundamental do Cálculo:**")
-                        steps.append(f"$$\\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} f(x) \\, dx = F({latex(b_expr)}) - F({latex(a_expr)})$$")
-                        steps.append(f"$$= {latex(Fb)} - {latex(Fa)}$$")
-                        steps.append(f"$$= {latex(result)}$$")
-                        
-                        # Valor numérico se possível
-                        try:
-                            numeric_result = float(result)
-                            steps.append(f"$$\\approx {numeric_result:.6f}$$")
-                        except:
-                            pass
-                    
-                    render_katex_steps(steps)
+        if st.button("Calcular Integral", key="int_calc"):
+            try:
+                x = Symbol('x')
+                expr = parse_expr(func_str.replace('^', '**'))
+                
+                steps = [f"Vamos calcular a integral da função:"]
+                steps.append(f"$$f(x) = {latex(expr)}$$")
 
-                except Exception as e:
-                    st.error(f"❌ **Erro no cálculo:** {str(e)}")
+                if isinstance(expr, Add):
+                    steps.append("Aplicando a Regra da Soma para integrais: $\\int (u+v) dx = \\int u dx + \\int v dx$.")
+                    term_integrals = [f"$\\int {latex(arg)} dx = {latex(integrate(arg, x))}$" for arg in expr.args]
+                    steps.append("<br>".join(term_integrals))
 
-    # Tab: Limite
-    with tabs[2]:
-        func_str = st.text_input("Função para limite:", placeholder="Ex: sin(x)/x", key="lim_func")
-        point = st.text_input("Ponto de aproximação:", value="0", key="lim_point")
-        direction = st.selectbox("Direção:", ["ambos", "+", "-"], key="lim_dir")
+
+                primitive = integrate(expr, x)
+                steps.append("A primitiva (integral indefinida) da função é:")
+                steps.append(f"$$F(x) = \\int {latex(expr)} \\, dx = {latex(primitive)}$$")
+
+                if int_type == "Indefinida":
+                    steps.append("**Resultado Final (Integral Indefinida):**")
+                    steps.append(f"$$\\int {latex(expr)} \\, dx = {latex(primitive)} + C$$")
+                else:
+                    a_expr, b_expr = parse_expr(a), parse_expr(b)
+                    Fa = primitive.subs(x, a_expr)
+                    Fb = primitive.subs(x, b_expr)
+                    result = Fb - Fa
+                    
+                    steps.append("Para a integral definida, aplicamos o Teorema Fundamental do Cálculo:")
+                    steps.append(f"$$\\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} f(x) \\, dx = F({latex(b_expr)}) - F({latex(a_expr)})$$")
+                    steps.append("Calculando os valores nos limites:")
+                    steps.append(f"$$F({latex(b_expr)}) = {latex(Fb)}$$")
+                    steps.append(f"$$F({latex(a_expr)}) = {latex(Fa)}$$")
+                    steps.append("**Resultado Final (Integral Definida):**")
+                    steps.append(f"$$\\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} f(x) \\, dx = {latex(Fb)} - ({latex(Fa)}) = {latex(result)}$$")
+                    if result.is_number:
+                         steps.append(f"$$\\approx {result.evalf(6)}$$")
+
+                render_katex_steps(steps, "Cálculo da Integral")
+
+            except Exception as e:
+                st.error(f"❌ **Erro no cálculo:** {e}")
+
+    with tabs[2]: # Limite
+        func_str = st.text_input("Função para limite f(x):", "sin(x)/x", key="lim_func")
+        point = st.text_input("Ponto de aproximação x₀:", "0", key="lim_point")
+        direction = st.selectbox("Direção:", ["bilateral", "pela direita (+)", "pela esquerda (-)"], key="lim_dir")
         
-        if st.button("Calcular limite", key="lim_calc"):
-            if func_str:
+        if st.button("Calcular Limite", key="lim_calc"):
+            try:
+                x = Symbol('x')
+                expr = parse_expr(func_str.replace('^', '**'))
+                point_expr = parse_expr(point.replace('^', '**'))
+                
+                dir_map = {"bilateral": None, "pela direita (+)": "+", "pela esquerda (-)": "-"}
+                dir_symbol_map = {"bilateral": "", "pela direita (+)": "^+", "pela esquerda (-)": "^-"}
+                
+                steps = [f"Vamos calcular o limite da função quando $x$ tende a ${latex(point_expr)}$:"]
+                steps.append(f"$$f(x) = {latex(expr)}$$")
+                steps.append(f"$$\\lim_{{x \\to {latex(point_expr)}{dir_symbol_map[direction]}}} {latex(expr)}$$")
+
+                # Tentar substituição direta
                 try:
-                    expr = parse_expr(func_str.replace('^', '**'))
-                    x = Symbol('x')
-                    point_expr = parse_expr(point.replace('^', '**'))
+                    num = limit(expr.as_numer_denom()[0], x, point_expr)
+                    den = limit(expr.as_numer_denom()[1], x, point_expr)
                     
-                    steps = []
-                    steps.append("**Cálculo do Limite:**")
-                    steps.append(f"$$f(x) = {latex(expr)}$$")
-                    
-                    dir_symbol = ""
-                    if direction == "+":
-                        dir_symbol = "^+"
-                    elif direction == "-":
-                        dir_symbol = "^-"
-                    
-                    steps.append(f"$$\\text{{Calculando: }} \\lim_{{x \\to {latex(point_expr)}{dir_symbol}}} f(x)$$")
-                    
-                    # Verificar se é uma forma indeterminada
-                    try:
+                    if (num == 0 and den == 0) or (abs(num) == zoo and abs(den) == zoo):
+                        steps.append(f"A substituição direta resulta em uma forma indeterminada ($\\frac{{{latex(num)}}}{{{latex(den)}}}$).")
+                        steps.append("O Sympy aplicará técnicas avançadas, como a Regra de L'Hôpital, para resolver o limite.")
+                    else:
                         direct_sub = expr.subs(x, point_expr)
-                        if direct_sub.is_finite and not direct_sub.has(zoo):
-                            steps.append("**Substituição direta:**")
-                            steps.append(f"$$f({latex(point_expr)}) = {latex(direct_sub)}$$")
-                        else:
-                            steps.append("**Forma indeterminada detectada - aplicando técnicas de limite**")
-                    except:
-                        steps.append("**Substituição direta não possível - aplicando técnicas de limite**")
-                    
-                    dir_map = {"ambos": None, "+": "+", "-": "-"}
-                    result = limit(expr, x, point_expr, dir_map[direction])
-                    
-                    steps.append("**Resultado:**")
-                    steps.append(f"$$\\lim_{{x \\to {latex(point_expr)}{dir_symbol}}} {latex(expr)} = {latex(result)}$$")
-                    
-                    render_katex_steps(steps)
+                        steps.append("Tentando a substituição direta:")
+                        steps.append(f"$$f({latex(point_expr)}) = {latex(direct_sub)}$$")
+                except Exception:
+                    steps.append("A substituição direta não é trivial. Vamos calcular o limite diretamente.")
 
-                except Exception as e:
-                    st.error(f"❌ **Erro no cálculo:** {str(e)}")
+                result = limit(expr, x, point_expr, dir_map[direction])
+                
+                steps.append("**Resultado Final:**")
+                steps.append(f"$$\\lim_{{x \\to {latex(point_expr)}{dir_symbol_map[direction]}}} {latex(expr)} = {latex(result)}$$")
+                
+                render_katex_steps(steps, "Cálculo do Limite")
 
-    # Tab: Série de Taylor
-    with tabs[3]:
-        func_str = st.text_input("Função:", placeholder="Ex: exp(x)", key="taylor_func")
-        x0 = st.text_input("Ponto (x0):", value="0", key="taylor_x0")
-        n = st.number_input("Ordem (n):", min_value=1, value=4, step=1, key="taylor_n")
+            except Exception as e:
+                st.error(f"❌ **Erro no cálculo:** {e}")
+
+    with tabs[3]: # Série de Taylor
+        func_str = st.text_input("Função f(x):", "exp(x)", key="taylor_func")
+        x0 = st.text_input("Ponto de expansão (x₀):", "0", key="taylor_x0")
+        n = st.number_input("Ordem (n):", 1, 10, 4, key="taylor_n")
         
-        if st.button("Calcular série", key="taylor_calc"):
-            if func_str:
-                try:
-                    expr = parse_expr(func_str.replace('^','**'))
-                    x0_expr = parse_expr(x0.replace('^','**'))
-                    x = Symbol('x')
-                    
-                    steps = []
-                    steps.append("**Série de Taylor:**")
-                    steps.append(f"$$f(x) = {latex(expr)}$$")
-                    steps.append(f"$$\\text{{Expansão em torno de }} x_0 = {latex(x0_expr)}$$")
-                    
-                    # Fórmula geral da série de Taylor
-                    steps.append("**Fórmula geral:**")
-                    steps.append("$$f(x) = \\sum_{n=0}^{\\infty} \\frac{f^{(n)}(x_0)}{n!}(x-x_0)^n$$")
-                    
-                    # Calcular alguns termos
-                    steps.append("**Derivadas no ponto:**")
-                    for i in range(min(n+1, 5)):
-                        if i == 0:
-                            deriv = expr
-                            steps.append(f"$$f({latex(x0_expr)}) = {latex(deriv.subs(x, x0_expr))}$$")
-                        else:
-                            deriv = diff(expr, x, i)
-                            steps.append(f"$$f^{{({i})}}({latex(x0_expr)}) = {latex(deriv.subs(x, x0_expr))}$$")
-                    
-                    # Série resultante
-                    result = series(expr, x, x0_expr, n+1).removeO()
-                    steps.append("**Série de Taylor até ordem " + str(n) + ":**")
-                    steps.append(f"$$f(x) \\approx {latex(result)}$$")
-                    
-                    render_katex_steps(steps)
+        if st.button("Calcular Série de Taylor", key="taylor_calc"):
+            try:
+                x = Symbol('x')
+                expr = parse_expr(func_str.replace('^','**'))
+                x0_expr = parse_expr(x0.replace('^','**'))
+                
+                steps = [f"Calculando a expansão em Série de Taylor para $f(x) = {latex(expr)}$ em torno de $x_0 = {latex(x0_expr)}$ até a ordem {n}."]
+                steps.append("A fórmula da Série de Taylor é:")
+                steps.append("$$f(x) \\approx \\sum_{k=0}^{n} \\frac{f^{(k)}(x_0)}{k!}(x-x_0)^k$$")
+                steps.append("Calculando as derivadas e seus valores em $x_0$:")
+                
+                taylor_terms = []
+                for i in range(n + 1):
+                    deriv = diff(expr, x, i)
+                    deriv_val = deriv.subs(x, x0_expr)
+                    steps.append(f"$$f^{{({i})}}(x) = {latex(deriv)} \\implies f^{{({i})}}({latex(x0_expr)}) = {latex(deriv_val)}$$")
+                
+                result = series(expr, x, x0_expr, n+1).removeO()
+                steps.append(f"**Resultado da Série de Taylor (ordem {n}):**")
+                steps.append(f"$$f(x) \\approx {latex(result)}$$")
+                
+                render_katex_steps(steps, "Cálculo da Série de Taylor")
 
-                except Exception as e:
-                    st.error(f"❌ **Erro no cálculo:** {str(e)}")
+            except Exception as e:
+                st.error(f"❌ **Erro no cálculo:** {e}")
 
     # Tab: Transformação
     with tabs[4]:
