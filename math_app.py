@@ -44,54 +44,76 @@ st.set_page_config(
 # Estilos CSS personalizados
 st.markdown("""
 <style>
+/* Estilos gerais */
+.stApp {
+    background-color: #f0f2f6;
+}
+/* Botões */
 div.stButton > button {
     width: 100%;
     background-color: #4CAF50;
     color: white;
-    padding: 14px 20px;
+    padding: 12px 18px;
     margin: 8px 0;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
     font-weight: bold;
+    transition: background-color 0.3s ease;
 }
 div.stButton > button:hover {
     background-color: #45a049;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
-.math-result {
-    padding: 20px;
-    background-color: #f0f2f6;
-    border-radius: 5px;
-    margin-top: 20px;
-    font-family: monospace;
-}
+/* Título principal */
 .header {
     color: #4CAF50;
     text-align: center;
+    padding: 10px;
+    font-size: 3em;
+    font-weight: bold;
 }
-.plot-container {
-    margin-top: 30px;
-}
-.tab-content {
-    padding: 20px 0;
-}
+/* Container para passos de texto */
 .step-container {
     margin: 10px 0;
     padding: 15px;
     background-color: #ffffff;
-    border: 2px solid #4CAF50;
+    border-left: 5px solid #4CAF50;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 1.1em;
 }
+/* Container para resultados KaTeX */
 .katex-result {
-    background-color: #ffffff !important;
-    color: #1f1f1f !important;
-    border: 2px solid #4CAF50 !important;
-    border-radius: 8px !important;
-    padding: 15px !important;
-    margin: 10px 0 !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    font-size: 22px;
+    text-align: center;
+    padding: 20px;
+    background-color: #ffffff;
+    color: #333;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    margin: 10px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-x: auto; /* Garante rolagem em telas pequenas */
+}
+/* Estilo das abas */
+.stTabs [data-baseweb="tab-list"] {
+	gap: 24px;
+}
+.stTabs [data-baseweb="tab"] {
+	height: 50px;
+    white-space: pre-wrap;
+	background-color: #F0F0F0;
+	border-radius: 8px 8px 0px 0px;
+	gap: 1px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+.stTabs [aria-selected="true"] {
+  	background-color: #4CAF50;
+	color: white;
+	font-weight: bold;
 }
 </style>
 """, unsafe_allow_html=True)
