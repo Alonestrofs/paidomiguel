@@ -118,6 +118,7 @@ div.stButton > button:hover {
 </style>
 """, unsafe_allow_html=True)
 
+
 def plot_function(expr, var, x_range=(-10, 10), points=1000):
     """Gera o gráfico de uma função matemática"""
     x_vals = np.linspace(x_range[0], x_range[1], points)
