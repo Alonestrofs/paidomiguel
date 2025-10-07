@@ -3,14 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sympy import (symbols, diff, integrate, series, parse_expr, sin, cos, tan,
                    exp, log, sqrt, latex, solve, summation, Eq, Symbol, lambdify,
-                   limit, laplace_transform, inverse_laplace_transform, simplify, Add, Mul, Pow, zoo)
-from sympy.parsing.sympy_parser import parse_expr
+                   limit, laplace_transform, inverse_laplace_transform, simplify, 
+                   Add, Mul, Pow, zoo, oo)
 import streamlit.components.v1 as components
 
 # --- Funções de Renderização e Estilo ---
 
-def render_katex(latex_str, height=80):
+def render_katex(latex_str, height=None):
     """Renderiza uma string LaTeX usando KaTeX em um container HTML estilizado."""
+    if height is None:
+        # Estimar altura baseado no comprimento da string
+        height = max(80, min(300, len(latex_str) // 2))
+
     html = f"""
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
@@ -33,7 +37,7 @@ def render_katex_steps(steps_list, title=""):
     for step in steps_list:
         # Se for um passo de cálculo (começando com $$)
         if step.startswith("$$"):
-            render_katex(step, height=70)
+            render_katex(step, height=100)
         # Se for um passo de texto explicativo
         else:
             st.markdown(f'<div class="step-container">{step}</div>', unsafe_allow_html=True)
@@ -128,23 +132,26 @@ div.stButton > button:hover {
 
 def plot_function(expr, var, x_range=(-10, 10), points=1000):
     """Gera o gráfico de uma função matemática."""
-    x_vals = np.linspace(x_range[0], x_range[1], points)
-    f = lambdify(var, expr, 'numpy')
-    y_vals = f(x_vals)
+    try:
+        x_vals = np.linspace(x_range[0], x_range[1], points)
+        f = lambdify(var, expr, 'numpy')
+        y_vals = f(x_vals)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(x_vals, y_vals, label=f'${latex(expr)}$', color='#4CAF50', linewidth=2.5)
-    ax.axhline(0, color='black', linewidth=0.7)
-    ax.axvline(0, color='black', linewidth=0.7)
-    ax.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
-    ax.legend(fontsize=14)
-    ax.set_xlabel(f'${latex(var)}$', fontsize=14)
-    ax.set_ylabel(f'$f({latex(var)})$', fontsize=14)
-    ax.set_title(f'Gráfico de $f({latex(var)}) = {latex(expr)}$', fontsize=16)
-    ax.set_facecolor('#f0f2f6')
-    fig.patch.set_facecolor('#f0f2f6')
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(x_vals, y_vals, label=f'${latex(expr)}$', color='#4CAF50', linewidth=2.5)
+        ax.axhline(0, color='black', linewidth=0.7)
+        ax.axvline(0, color='black', linewidth=0.7)
+        ax.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+        ax.legend(fontsize=14)
+        ax.set_xlabel(f'${latex(var)}$', fontsize=14)
+        ax.set_ylabel(f'$f({latex(var)})$', fontsize=14)
+        ax.set_title(f'Gráfico de $f({latex(var)}) = {latex(expr)}$', fontsize=16)
+        ax.set_facecolor('#f0f2f6')
+        fig.patch.set_facecolor('#f0f2f6')
 
-    st.pyplot(fig)
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"❌ **Erro ao gerar gráfico:** {e}")
 
 def basic_calculator():
     st.header("Calculadora Básica")
@@ -155,20 +162,20 @@ def basic_calculator():
 
     if st.button("Calcular", key="basic_calc"):
         try:
-            op_map = {"+": "+", "×": "\\times", "÷": "/", "^": "^"}
+            op_map = {"+": "+", "-": "-", "×": "\times", "÷": "/", "^": "^"}
             result_map = {
                 "+": lambda a, b: a + b,
                 "×": lambda a, b: a * b,
                 "-": lambda a, b: a - b,
-                "÷": lambda a, b: a / b if b != 0 else "Erro: Divisão por zero",
+                "÷": lambda a, b: a / b if b != 0 else None,
                 "^": lambda a, b: a ** b,
             }
             result = result_map[operation](num1, num2)
-            if isinstance(result, str):
-                st.error(f"❌ **Erro:** {result}")
+            if result is None:
+                st.error("❌ **Erro:** Divisão por zero")
             else:
                 if operation == "÷":
-                    latex_expr = f"\\frac{{{num1}}}{{{num2}}}"
+                    latex_expr = f"\frac{{{num1}}}{{{num2}}}"
                 else:
                     latex_expr = f"{num1} {op_map[operation]} {num2}"
                 render_katex_steps([f"Cálculo da operação:", f"$${latex_expr} = {result}$$"])
@@ -196,7 +203,7 @@ def polynomial_solver():
                 expr = Eq(parse_expr(eq_clean), 0)
                 steps.append(f"Assumindo que a expressão é igual a zero:")
                 steps.append(f"$${latex(expr)}$$")
-            
+
             solutions = solve(expr, x)
             if not solutions:
                 steps.append("A equação não possui soluções no conjunto dos números reais.")
@@ -223,17 +230,18 @@ def summation_calculator():
             var = symbols(sum_var)
             expr = parse_expr(sum_expr.replace('^', '**'))
             result = summation(expr, (var, lower, upper))
-            
+
             steps = [f"Calculando o somatório da expressão ${latex(expr)}$ de ${latex(var)}={lower}$ até ${latex(var)}={upper}$."]
-            steps.append(f"$$\\sum_{{{latex(var)}={int(lower)}}}^{{{int(upper)}}} {latex(expr)}$$")
+            steps.append(f"$$\sum_{{{latex(var)}={int(lower)}}}^{{{int(upper)}}} {latex(expr)}$$")
 
             if upper - lower < 15: # Mostrar expansão para somas pequenas
-                terms = [f"({latex(expr.subs(var, i))})" for i in range(int(lower), int(upper) + 1)]
                 steps.append("Expandindo os termos da soma:")
-                steps.append(f"$$ = {' + '.join(terms)}$$")
+                for i in range(int(lower), int(upper) + 1):
+                    term_val = expr.subs(var, i)
+                    steps.append(f"$$\text{{Para }} {latex(var)}={i}: {latex(term_val)}$$")
 
             steps.append("O resultado do somatório é:")
-            steps.append(f"$$\\sum_{{{latex(var)}={int(lower)}}}^{{{int(upper)}}} {latex(expr)} = {latex(result)}$$")
+            steps.append(f"$$\sum_{{{latex(var)}={int(lower)}}}^{{{int(upper)}}} {latex(expr)} = {latex(result)}$$")
             render_katex_steps(steps, "Cálculo do Somatório")
         except Exception as e:
             st.error(f"❌ **Erro no cálculo:** {e}")
@@ -251,37 +259,36 @@ def advanced_calculator():
                 expr = parse_expr(func_str.replace('^', '**'))
                 steps = [f"Vamos calcular a derivada de ordem {order} da função:"]
                 steps.append(f"$$f(x) = {latex(expr)}$$")
-                
+
                 current_expr = expr
                 for i in range(1, order + 1):
                     deriv = diff(current_expr, x)
                     if isinstance(current_expr, Add):
                         steps.append(f"**{i}ª Derivada:** Aplicando a Regra da Soma: $(u+v)' = u' + v'$.")
-                        # O Sympy faz isso automaticamente.
                     elif isinstance(current_expr, Mul) and len(current_expr.args) == 2:
                         u, v = current_expr.args
                         du, dv = diff(u, x), diff(v, x)
-                        steps.append(f"**{i}ª Derivada:** Aplicando a Regra do Produto: $(u \\cdot v)' = u' \\cdot v + u \\cdot v'$.")
+                        steps.append(f"**{i}ª Derivada:** Aplicando a Regra do Produto: $(u \cdot v)' = u' \cdot v + u \cdot v'$.")
                         steps.append(f"Onde $u = {latex(u)}$ e $v = {latex(v)}$.")
                         steps.append(f"As derivadas são $u' = {latex(du)}$ e $v' = {latex(dv)}$.")
                         steps.append("Substituindo na fórmula:")
-                        steps.append(f"$$f^{{({i})}}(x) = ({latex(du)}) \\cdot ({latex(v)}) + ({latex(u)}) \\cdot ({latex(dv)})$$")
+                        steps.append(f"$$f^{{({i})}}(x) = ({latex(du)}) \cdot ({latex(v)}) + ({latex(u)}) \cdot ({latex(dv)})$$")
                     elif isinstance(current_expr, Pow):
                         base, exp_val = current_expr.args
                         if x in base.free_symbols and x not in exp_val.free_symbols:
-                            steps.append(f"**{i}ª Derivada:** Aplicando a Regra da Potência: $(u^n)' = n \\cdot u^{{n-1}} \\cdot u'$.")
+                            steps.append(f"**{i}ª Derivada:** Aplicando a Regra da Potência: $(u^n)' = n \cdot u^{{n-1}} \cdot u'$.")
                         elif x in exp_val.free_symbols:
                              steps.append(f"**{i}ª Derivada:** Aplicando a Regra da Exponencial e/ou Cadeia.")
-                    
+
                     simplified = simplify(deriv)
                     if order > 1:
                         steps.append(f"O resultado da {i}ª derivada é:")
-                        steps.append(f"$$\\frac{{d^{i}}}{{dx^{i}}} f(x) = {latex(simplified)}$$")
+                        steps.append(f"$$\frac{{d^{i}}}{{dx^{i}}} f(x) = {latex(simplified)}$$")
                     current_expr = deriv
 
                 final_deriv = diff(expr, x, order)
                 final_simplified = simplify(final_deriv)
-                
+
                 steps.append("**Resultado Final:**")
                 d_symbol = f"f^{{({order})}}(x)" if order > 1 else "f'(x)"
                 steps.append(f"$${d_symbol} = {latex(final_deriv)}$$")
@@ -289,7 +296,7 @@ def advanced_calculator():
                 if final_deriv != final_simplified:
                     steps.append("Após simplificação, obtemos:")
                     steps.append(f"$${d_symbol} = {latex(final_simplified)}$$")
-                
+
                 render_katex_steps(steps, "Cálculo da Derivada")
 
             except Exception as e:
@@ -303,43 +310,43 @@ def advanced_calculator():
             col_a, col_b = st.columns(2)
             a = col_a.text_input("Limite inferior (a):", "0", key="int_a")
             b = col_b.text_input("Limite superior (b):", "1", key="int_b")
-        
+
         if st.button("Calcular Integral", key="int_calc"):
             try:
                 x = Symbol('x')
                 expr = parse_expr(func_str.replace('^', '**'))
-                
+
                 steps = [f"Vamos calcular a integral da função:"]
                 steps.append(f"$$f(x) = {latex(expr)}$$")
 
                 if isinstance(expr, Add):
-                    steps.append("Aplicando a Regra da Soma para integrais: $\\int (u+v) dx = \\int u dx + \\int v dx$.")
-                    term_integrals = [f"$\\int {latex(arg)} dx = {latex(integrate(arg, x))}$" for arg in expr.args]
-                    steps.append("<br>".join(term_integrals))
-
+                    steps.append("Aplicando a Regra da Soma para integrais: $\int (u+v) dx = \int u dx + \int v dx$.")
+                    for arg in expr.args:
+                        arg_integral = integrate(arg, x)
+                        steps.append(f"$$\int {latex(arg)} \, dx = {latex(arg_integral)}$$")
 
                 primitive = integrate(expr, x)
                 steps.append("A primitiva (integral indefinida) da função é:")
-                steps.append(f"$$F(x) = \\int {latex(expr)} \\, dx = {latex(primitive)}$$")
+                steps.append(f"$$F(x) = \int {latex(expr)} \, dx = {latex(primitive)}$$")
 
                 if int_type == "Indefinida":
                     steps.append("**Resultado Final (Integral Indefinida):**")
-                    steps.append(f"$$\\int {latex(expr)} \\, dx = {latex(primitive)} + C$$")
+                    steps.append(f"$$\int {latex(expr)} \, dx = {latex(primitive)} + C$$")
                 else:
                     a_expr, b_expr = parse_expr(a), parse_expr(b)
                     Fa = primitive.subs(x, a_expr)
                     Fb = primitive.subs(x, b_expr)
                     result = Fb - Fa
-                    
+
                     steps.append("Para a integral definida, aplicamos o Teorema Fundamental do Cálculo:")
-                    steps.append(f"$$\\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} f(x) \\, dx = F({latex(b_expr)}) - F({latex(a_expr)})$$")
+                    steps.append(f"$$\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} f(x) \, dx = F({latex(b_expr)}) - F({latex(a_expr)})$$")
                     steps.append("Calculando os valores nos limites:")
                     steps.append(f"$$F({latex(b_expr)}) = {latex(Fb)}$$")
                     steps.append(f"$$F({latex(a_expr)}) = {latex(Fa)}$$")
                     steps.append("**Resultado Final (Integral Definida):**")
-                    steps.append(f"$$\\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} f(x) \\, dx = {latex(Fb)} - ({latex(Fa)}) = {latex(result)}$$")
+                    steps.append(f"$$\int_{{{latex(a_expr)}}}^{{{latex(b_expr)}}} f(x) \, dx = {latex(Fb)} - ({latex(Fa)}) = {latex(result)}$$")
                     if result.is_number:
-                         steps.append(f"$$\\approx {result.evalf(6)}$$")
+                         steps.append(f"$$\approx {result.evalf(6)}$$")
 
                 render_katex_steps(steps, "Cálculo da Integral")
 
@@ -350,27 +357,34 @@ def advanced_calculator():
         func_str = st.text_input("Função para limite f(x):", "sin(x)/x", key="lim_func")
         point = st.text_input("Ponto de aproximação x₀:", "0", key="lim_point")
         direction = st.selectbox("Direção:", ["bilateral", "pela direita (+)", "pela esquerda (-)"], key="lim_dir")
-        
+
         if st.button("Calcular Limite", key="lim_calc"):
             try:
                 x = Symbol('x')
                 expr = parse_expr(func_str.replace('^', '**'))
                 point_expr = parse_expr(point.replace('^', '**'))
-                
+
                 dir_map = {"bilateral": None, "pela direita (+)": "+", "pela esquerda (-)": "-"}
                 dir_symbol_map = {"bilateral": "", "pela direita (+)": "^+", "pela esquerda (-)": "^-"}
-                
+
                 steps = [f"Vamos calcular o limite da função quando $x$ tende a ${latex(point_expr)}$:"]
                 steps.append(f"$$f(x) = {latex(expr)}$$")
-                steps.append(f"$$\\lim_{{x \\to {latex(point_expr)}{dir_symbol_map[direction]}}} {latex(expr)}$$")
+                steps.append(f"$$\lim_{{x \to {latex(point_expr)}{dir_symbol_map[direction]}}} {latex(expr)}$$")
 
                 # Tentar substituição direta
                 try:
                     num = limit(expr.as_numer_denom()[0], x, point_expr)
                     den = limit(expr.as_numer_denom()[1], x, point_expr)
-                    
-                    if (num == 0 and den == 0) or (abs(num) == zoo and abs(den) == zoo):
-                        steps.append(f"A substituição direta resulta em uma forma indeterminada ($\\frac{{{latex(num)}}}{{{latex(den)}}}$).")
+
+                    # Verificação corrigida para infinitos
+                    is_indeterminate = False
+                    if (num == 0 and den == 0):
+                        is_indeterminate = True
+                    elif num.has(zoo, oo, -oo) or den.has(zoo, oo, -oo):
+                        is_indeterminate = True
+
+                    if is_indeterminate:
+                        steps.append(f"A substituição direta resulta em uma forma indeterminada.")
                         steps.append("O Sympy aplicará técnicas avançadas, como a Regra de L'Hôpital, para resolver o limite.")
                     else:
                         direct_sub = expr.subs(x, point_expr)
@@ -380,10 +394,10 @@ def advanced_calculator():
                     steps.append("A substituição direta não é trivial. Vamos calcular o limite diretamente.")
 
                 result = limit(expr, x, point_expr, dir_map[direction])
-                
+
                 steps.append("**Resultado Final:**")
-                steps.append(f"$$\\lim_{{x \\to {latex(point_expr)}{dir_symbol_map[direction]}}} {latex(expr)} = {latex(result)}$$")
-                
+                steps.append(f"$$\lim_{{x \to {latex(point_expr)}{dir_symbol_map[direction]}}} {latex(expr)} = {latex(result)}$$")
+
                 render_katex_steps(steps, "Cálculo do Limite")
 
             except Exception as e:
@@ -393,52 +407,51 @@ def advanced_calculator():
         func_str = st.text_input("Função f(x):", "exp(x)", key="taylor_func")
         x0 = st.text_input("Ponto de expansão (x₀):", "0", key="taylor_x0")
         n = st.number_input("Ordem (n):", 1, 10, 4, key="taylor_n")
-        
+
         if st.button("Calcular Série de Taylor", key="taylor_calc"):
             try:
                 x = Symbol('x')
                 expr = parse_expr(func_str.replace('^','**'))
                 x0_expr = parse_expr(x0.replace('^','**'))
-                
+
                 steps = [f"Calculando a expansão em Série de Taylor para $f(x) = {latex(expr)}$ em torno de $x_0 = {latex(x0_expr)}$ até a ordem {n}."]
                 steps.append("A fórmula da Série de Taylor é:")
-                steps.append("$$f(x) \\approx \\sum_{k=0}^{n} \\frac{f^{(k)}(x_0)}{k!}(x-x_0)^k$$")
+                steps.append("$$f(x) \approx \sum_{k=0}^{n} \frac{f^{(k)}(x_0)}{k!}(x-x_0)^k$$")
                 steps.append("Calculando as derivadas e seus valores em $x_0$:")
-                
-                taylor_terms = []
+
                 for i in range(n + 1):
                     deriv = diff(expr, x, i)
                     deriv_val = deriv.subs(x, x0_expr)
-                    steps.append(f"$$f^{{({i})}}(x) = {latex(deriv)} \\implies f^{{({i})}}({latex(x0_expr)}) = {latex(deriv_val)}$$")
-                
+                    steps.append(f"$$f^{{({i})}}(x) = {latex(deriv)} \implies f^{{({i})}}({latex(x0_expr)}) = {latex(deriv_val)}$$")
+
                 result = series(expr, x, x0_expr, n+1).removeO()
                 steps.append(f"**Resultado da Série de Taylor (ordem {n}):**")
-                steps.append(f"$$f(x) \\approx {latex(result)}$$")
-                
+                steps.append(f"$$f(x) \approx {latex(result)}$$")
+
                 render_katex_steps(steps, "Cálculo da Série de Taylor")
 
             except Exception as e:
                 st.error(f"❌ **Erro no cálculo:** {e}")
-    
+
     with tabs[4]: # Transformada de Laplace
         func_str = st.text_input("Função f(t):", "t*exp(-a*t)", key="transf_func")
         transf_type = st.radio("Tipo:", ["Direta", "Inversa"], key="transf_type", horizontal=True)
-        
+
         if st.button("Calcular Transformada", key="transf_calc"):
             try:
                 t, s, a = symbols('t s a')
                 expr = parse_expr(func_str.replace('^','**'))
                 steps = []
-                
+
                 if transf_type == "Direta":
                     steps.append(f"Calculando a Transformada de Laplace de $f(t) = {latex(expr)}$:")
-                    steps.append("$$\\mathcal{{L}}\\{{f(t)\\}} = F(s) = \\int_0^{\\infty} f(t) e^{-st} dt$$")
+                    steps.append("$$\mathcal{{L}}\{{f(t)\}} = F(s) = \int_0^{\infty} f(t) e^{{-st}} dt$$")
                     result = laplace_transform(expr, t, s, noconds=True)
                     steps.append("**Resultado:**")
                     steps.append(f"$$F(s) = {latex(result)}$$")
                 else: # Inversa
                     steps.append(f"Calculando a Transformada Inversa de Laplace de $F(s) = {latex(expr)}$:")
-                    steps.append("$$\\mathcal{{L}}^{{-1}}\\{{F(s)\\}} = f(t)$$")
+                    steps.append("$$\mathcal{{L}}^{{-1}}\{{F(s)\}} = f(t)$$")
                     result = inverse_laplace_transform(expr, s, t)
                     steps.append("**Resultado:**")
                     steps.append(f"$$f(t) = {latex(result)}$$")
@@ -452,12 +465,12 @@ def advanced_calculator():
 def graphing_calculator():
     st.header("Calculadora Gráfica")
     func_str = st.text_input("Função f(x) para plotar:", "sin(x) * exp(-x/10)", key="graph_func")
-    
+
     col1, col2, col3 = st.columns(3)
     x_min = col1.number_input("X mínimo:", value=-10.0)
     x_max = col2.number_input("X máximo:", value=10.0)
     points = col3.number_input("Pontos no gráfico:", 100, 5000, 1000)
-    
+
     if st.button("Plotar Função", key="plot_func"):
         if not func_str:
             st.warning("Por favor, insira uma função.")
@@ -483,11 +496,11 @@ def main():
         "Cálculos Avançados (Cálculo)",
         "Calculadora Gráfica"
     ]
-    
+
     # Usando uma barra lateral para navegação
     st.sidebar.title("Ferramentas")
     selection = st.sidebar.radio("Escolha uma ferramenta:", tool_options)
-    
+
     st.sidebar.markdown("---")
     st.sidebar.info("Esta aplicação utiliza as bibliotecas SymPy e Streamlit para fornecer uma calculadora simbólica interativa.")
 
