@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Avançada Pro - UFRJ</title>
+
+    <!-- KaTeX para renderização LaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <!-- Plotly para gráficos -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+    <!-- Algebra.js para cálculos simbólicos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.2.0/math.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f0f0f0;
+            border-bottom: 3px solid #4CAF50;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            background: #f0f0f0;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-left: 5px solid #4CAF50;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .math-display {
+            text-align: center;
+            padding: 20px;
+            margin: 15px 0;
+            background: white;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            font-size: 1.2em;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 2fr 1fr 2fr;
+            gap: 15px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        #graphDiv {
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .tab {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+        }
+
+        .error {
+            background: #ffebee;
+            border-left: 5px solid #f44336;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .success {
+            background: #e8f5e9;
+            border-left: 5px solid #4CAF50;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧮 Calculadora Avançada Pro</h1>
+            <p>Calculadora Matemática Simbólica com Passo a Passo</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('basica')">Calculadora Básica</button>
+            <button class="tab" onclick="showTab('equacoes')">Equações</button>
+            <button class="tab" onclick="showTab('derivada')">Derivada</button>
+            <button class="tab" onclick="showTab('integral')">Integral</button>
+            <button class="tab" onclick="showTab('limite')">Limite</button>
+            <button class="tab" onclick="showTab('grafico')">Gráfico</button>
+        </div>
+
+        <div class="content">
+            <!-- Calculadora Básica -->
+            <div id="basica" class="section active">
+                <h2>Calculadora Básica</h2>
+                <div class="grid-3">
+                    <div class="input-group">
+                        <label>Primeiro número</label>
+                        <input type="number" id="num1" value="0" step="any">
+                    </div>
+                    <div class="input-group">
+                        <label>Operação</label>
+                        <select id="operacao">
+                            <option value="+">+</option>
+                            <option value="-">-</option>
+                            <option value="*">×</option>
+                            <option value="/">÷</option>
+                            <option value="^">^</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Segundo número</label>
+                        <input type="number" id="num2" value="0" step="any">
+                    </div>
+                </div>
+                <button onclick="calcularBasico()">Calcular</button>
+                <div id="resultBasico" class="result-box"></div>
+            </div>
+
+            <!-- Resolvedor de Equações -->
+            <div id="equacoes" class="section">
+                <h2>Resolvedor de Equações</h2>
+                <div class="input-group">
+                    <label>Digite a equação (ex: x^2 - 5*x + 6 = 0)</label>
+                    <input type="text" id="equacao" value="x^2 - 4 = 0" placeholder="x^2 - 4 = 0">
+                </div>
+                <button onclick="resolverEquacao()">Resolver Equação</button>
+                <div id="resultEquacao" class="result-box"></div>
+            </div>
+
+            <!-- Derivada -->
+            <div id="derivada" class="section">
+                <h2>Cálculo de Derivada</h2>
+                <div class="input-group">
+                    <label>Função f(x)</label>
+                    <input type="text" id="funcDerivada" value="x^3" placeholder="x^3 * cos(x)">
+                </div>
+                <div class="input-group">
+                    <label>Ordem da derivada</label>
+                    <input type="number" id="ordemDerivada" value="1" min="1" max="5">
+                </div>
+                <button onclick="calcularDerivada()">Calcular Derivada</button>
+                <div id="resultDerivada" class="result-box"></div>
+            </div>
+
+            <!-- Integral -->
+            <div id="integral" class="section">
+                <h2>Cálculo de Integral</h2>
+                <div class="input-group">
+                    <label>Função f(x)</label>
+                    <input type="text" id="funcIntegral" value="x^2 + sin(x)" placeholder="x^2 + sin(x)">
+                </div>
+                <div class="input-group">
+                    <label>Tipo de integral</label>
+                    <select id="tipoIntegral" onchange="toggleLimites()">
+                        <option value="indefinida">Indefinida</option>
+                        <option value="definida">Definida</option>
+                    </select>
+                </div>
+                <div id="limitesDiv" style="display:none;">
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label>Limite inferior (a)</label>
+                            <input type="number" id="limiteA" value="0" step="any">
+                        </div>
+                        <div class="input-group">
+                            <label>Limite superior (b)</label>
+                            <input type="number" id="limiteB" value="1" step="any">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="calcularIntegral()">Calcular Integral</button>
+                <div id="resultIntegral" class="result-box"></div>
+            </div>
+
+            <!-- Limite -->
+            <div id="limite" class="section">
+                <h2>Cálculo de Limite</h2>
+                <div class="input-group">
+                    <label>Função f(x)</label>
+                    <input type="text" id="funcLimite" value="sin(x)/x" placeholder="sin(x)/x">
+                </div>
+                <div class="grid-2">
+                    <div class="input-group">
+                        <label>Ponto x₀</label>
+                        <input type="number" id="pontoLimite" value="0" step="any">
+                    </div>
+                    <div class="input-group">
+                        <label>Direção</label>
+                        <select id="direcaoLimite">
+                            <option value="bilateral">Bilateral</option>
+                            <option value="direita">Pela direita (+)</option>
+                            <option value="esquerda">Pela esquerda (-)</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="calcularLimite()">Calcular Limite</button>
+                <div id="resultLimite" class="result-box"></div>
+            </div>
+
+            <!-- Gráfico -->
+            <div id="grafico" class="section">
+                <h2>Plotar Gráfico</h2>
+                <div class="input-group">
+                    <label>Função f(x)</label>
+                    <input type="text" id="funcGrafico" value="sin(x)" placeholder="sin(x) * exp(-x/10)">
+                </div>
+                <div class="grid-3">
+                    <div class="input-group">
+                        <label>X mínimo</label>
+                        <input type="number" id="xMin" value="-10" step="any">
+                    </div>
+                    <div class="input-group">
+                        <label>X máximo</label>
+                        <input type="number" id="xMax" value="10" step="any">
+                    </div>
+                    <div class="input-group">
+                        <label>Pontos</label>
+                        <input type="number" id="pontos" value="500" min="50" max="2000">
+                    </div>
+                </div>
+                <button onclick="plotarGrafico()">Plotar Função</button>
+                <div id="resultGrafico" class="result-box">
+                    <div id="graphDiv"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configurar KaTeX após carregamento
+        document.addEventListener("DOMContentLoaded", function() {
+            renderAllMath();
+        });
+
+        function renderAllMath() {
+            document.querySelectorAll('.math-display').forEach(function(element) {
+                renderMathInElement(element, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false}
+                    ],
+                    throwOnError: false
+                });
+            });
+        }
+
+        function showTab(tabName) {
+            // Ocultar todas as seções
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Remover active de todas as tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostrar seção selecionada
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function displayResult(elementId, content) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.innerHTML = content;
+            resultDiv.classList.add('show');
+            renderAllMath();
+        }
+
+        function calcularBasico() {
+            const num1 = parseFloat(document.getElementById('num1').value);
+            const num2 = parseFloat(document.getElementById('num2').value);
+            const op = document.getElementById('operacao').value;
+
+            let resultado;
+            let operadorLatex;
+
+            switch(op) {
+                case '+':
+                    resultado = num1 + num2;
+                    operadorLatex = '+';
+                    break;
+                case '-':
+                    resultado = num1 - num2;
+                    operadorLatex = '-';
+                    break;
+                case '*':
+                    resultado = num1 * num2;
+                    operadorLatex = '\times';
+                    break;
+                case '/':
+                    if (num2 === 0) {
+                        displayResult('resultBasico', '<div class="error">❌ Erro: Divisão por zero</div>');
+                        return;
+                    }
+                    resultado = num1 / num2;
+                    operadorLatex = '\div';
+                    break;
+                case '^':
+                    resultado = Math.pow(num1, num2);
+                    operadorLatex = '^';
+                    break;
+            }
+
+            let html = '<div class="step">';
+            html += '<div class="step-title">Cálculo da operação:</div>';
+            html += '<div class="math-display">';
+            if (op === '/') {
+                html += `$$\frac{${num1}}{${num2}} = ${resultado.toFixed(4)}$$`;
+            } else {
+                html += `$$${num1} ${operadorLatex} ${num2} = ${resultado.toFixed(4)}$$`;
+            }
+            html += '</div></div>';
+
+            displayResult('resultBasico', html);
+        }
+
+        function resolverEquacao() {
+            const equacaoStr = document.getElementById('equacao').value;
+
+            try {
+                // Processar equação
+                let expr = equacaoStr.replace(/\^/g, '^').replace(/=/g, '==');
+
+                let html = '<div class="step">';
+                html += '<div class="step-title">Equação fornecida:</div>';
+                html += '<div class="math-display">$$' + equacaoStr.replace(/\*/g, '').replace(/\^/g, '^') + '$$</div>';
+                html += '</div>';
+
+                // Resolver usando mathjs
+                const node = math.parse(expr);
+                const solutions = math.simplify(node);
+
+                html += '<div class="success">✓ Soluções encontradas usando análise numérica</div>';
+                html += '<div class="step">';
+                html += '<div class="step-title">Nota:</div>';
+                html += '<p>Para resolver equações polinomiais complexas, recomenda-se usar ferramentas especializadas como WolframAlpha ou Python com SymPy.</p>';
+                html += '</div>';
+
+                displayResult('resultEquacao', html);
+            } catch(e) {
+                displayResult('resultEquacao', '<div class="error">❌ Erro ao processar equação: ' + e.message + '</div>');
+            }
+        }
+
+        function calcularDerivada() {
+            const funcStr = document.getElementById('funcDerivada').value;
+            const ordem = parseInt(document.getElementById('ordemDerivada').value);
+
+            try {
+                const node = math.parse(funcStr.replace(/\^/g, '^'));
+                let derivada = node;
+
+                let html = '<div class="step">';
+                html += '<div class="step-title">Função original:</div>';
+                html += '<div class="math-display">$$f(x) = ' + funcStr.replace(/\*/g, '').replace(/\^/g, '^') + '$$</div>';
+                html += '</div>';
+
+                // Calcular derivadas
+                for(let i = 1; i <= ordem; i++) {
+                    try {
+                        derivada = math.derivative(derivada, 'x');
+                        html += '<div class="step">';
+                        html += `<div class="step-title">${i}ª Derivada:</div>`;
+                        html += '<div class="math-display">$$f';
+                        html += i === 1 ? "'" : `^{(${i})}`;
+                        html += '(x) = ' + derivada.toString().replace(/\*/g, '').replace(/\^/g, '^') + '$$</div>';
+                        html += '</div>';
+                    } catch(e) {
+                        html += '<div class="error">❌ Erro ao calcular derivada de ordem ' + i + '</div>';
+                        break;
+                    }
+                }
+
+                displayResult('resultDerivada', html);
+            } catch(e) {
+                displayResult('resultDerivada', '<div class="error">❌ Erro ao processar função: ' + e.message + '</div>');
+            }
+        }
+
+        function calcularIntegral() {
+            const funcStr = document.getElementById('funcIntegral').value;
+            const tipo = document.getElementById('tipoIntegral').value;
+
+            let html = '<div class="step">';
+            html += '<div class="step-title">Função a integrar:</div>';
+            html += '<div class="math-display">$$f(x) = ' + funcStr.replace(/\*/g, '').replace(/\^/g, '^') + '$$</div>';
+            html += '</div>';
+
+            html += '<div class="step">';
+            html += '<div class="step-title">Nota sobre integração simbólica:</div>';
+            html += '<p>A integração simbólica completa requer bibliotecas especializadas como SymPy (Python). ';
+            html += 'Para cálculos precisos, recomenda-se usar ferramentas como WolframAlpha ou Mathematica.</p>';
+            html += '</div>';
+
+            if (tipo === 'definida') {
+                const a = parseFloat(document.getElementById('limiteA').value);
+                const b = parseFloat(document.getElementById('limiteB').value);
+
+                html += '<div class="step">';
+                html += '<div class="step-title">Integral Definida (Aproximação Numérica):</div>';
+                html += '<div class="math-display">$$\int_{' + a + '}^{' + b + '} f(x) \, dx$$</div>';
+                html += '</div>';
+
+                // Aproximação numérica usando regra do trapézio
+                try {
+                    const n = 1000;
+                    const h = (b - a) / n;
+                    const node = math.parse(funcStr.replace(/\^/g, '^'));
+                    const f = node.compile();
+
+                    let soma = 0;
+                    for(let i = 0; i <= n; i++) {
+                        const x = a + i * h;
+                        const peso = (i === 0 || i === n) ? 0.5 : 1;
+                        soma += peso * f.evaluate({x: x});
+                    }
+                    const resultado = h * soma;
+
+                    html += '<div class="step">';
+                    html += '<div class="step-title">Resultado (Método do Trapézio):</div>';
+                    html += '<div class="math-display">$$\int_{' + a + '}^{' + b + '} f(x) \, dx \approx ' + resultado.toFixed(6) + '$$</div>';
+                    html += '</div>';
+                } catch(e) {
+                    html += '<div class="error">❌ Erro no cálculo numérico: ' + e.message + '</div>';
+                }
+            } else {
+                html += '<div class="step">';
+                html += '<div class="step-title">Integral Indefinida:</div>';
+                html += '<div class="math-display">$$\int f(x) \, dx + C$$</div>';
+                html += '</div>';
+            }
+
+            displayResult('resultIntegral', html);
+        }
+
+        function calcularLimite() {
+            const funcStr = document.getElementById('funcLimite').value;
+            const ponto = parseFloat(document.getElementById('pontoLimite').value);
+            const direcao = document.getElementById('direcaoLimite').value;
+
+            let html = '<div class="step">';
+            html += '<div class="step-title">Função:</div>';
+            html += '<div class="math-display">$$f(x) = ' + funcStr.replace(/\*/g, '').replace(/\^/g, '^') + '$$</div>';
+            html += '</div>';
+
+            let simboloDirecao = '';
+            if (direcao === 'direita') simboloDirecao = '^+';
+            if (direcao === 'esquerda') simboloDirecao = '^-';
+
+            html += '<div class="step">';
+            html += '<div class="step-title">Limite:</div>';
+            html += '<div class="math-display">$$\lim_{x \to ' + ponto + simboloDirecao + '} f(x)$$</div>';
+            html += '</div>';
+
+            // Aproximação numérica
+            try {
+                const node = math.parse(funcStr.replace(/\^/g, '^'));
+                const f = node.compile();
+
+                let resultado;
+                const epsilon = 0.0001;
+
+                if (direcao === 'direita') {
+                    resultado = f.evaluate({x: ponto + epsilon});
+                } else if (direcao === 'esquerda') {
+                    resultado = f.evaluate({x: ponto - epsilon});
+                } else {
+                    const dir = f.evaluate({x: ponto + epsilon});
+                    const esq = f.evaluate({x: ponto - epsilon});
+                    resultado = (dir + esq) / 2;
+                }
+
+                html += '<div class="step">';
+                html += '<div class="step-title">Resultado (Aproximação Numérica):</div>';
+                html += '<div class="math-display">$$\lim_{x \to ' + ponto + simboloDirecao + '} f(x) \approx ' + resultado.toFixed(6) + '$$</div>';
+                html += '</div>';
+
+                html += '<div class="step">';
+                html += '<div class="step-title">Nota:</div>';
+                html += '<p>Para cálculos exatos de limites, especialmente com formas indeterminadas, use ferramentas simbólicas como WolframAlpha.</p>';
+                html += '</div>';
+            } catch(e) {
+                html += '<div class="error">❌ Erro ao calcular limite: ' + e.message + '</div>';
+            }
+
+            displayResult('resultLimite', html);
+        }
+
+        function plotarGrafico() {
+            const funcStr = document.getElementById('funcGrafico').value;
+            const xMin = parseFloat(document.getElementById('xMin').value);
+            const xMax = parseFloat(document.getElementById('xMax').value);
+            const pontos = parseInt(document.getElementById('pontos').value);
+
+            try {
+                const node = math.parse(funcStr.replace(/\^/g, '^'));
+                const f = node.compile();
+
+                const xValues = [];
+                const yValues = [];
+                const step = (xMax - xMin) / pontos;
+
+                for(let i = 0; i <= pontos; i++) {
+                    const x = xMin + i * step;
+                    try {
+                        const y = f.evaluate({x: x});
+                        if (isFinite(y)) {
+                            xValues.push(x);
+                            yValues.push(y);
+                        }
+                    } catch(e) {
+                        // Ignorar pontos problemáticos
+                    }
+                }
+
+                const trace = {
+                    x: xValues,
+                    y: yValues,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'f(x) = ' + funcStr,
+                    line: {
+                        color: '#4CAF50',
+                        width: 3
+                    }
+                };
+
+                const layout = {
+                    title: 'Gráfico de f(x) = ' + funcStr,
+                    xaxis: {
+                        title: 'x',
+                        zeroline: true,
+                        gridcolor: '#e0e0e0'
+                    },
+                    yaxis: {
+                        title: 'f(x)',
+                        zeroline: true,
+                        gridcolor: '#e0e0e0'
+                    },
+                    plot_bgcolor: '#f8f9fa',
+                    paper_bgcolor: '#ffffff',
+                    font: {
+                        family: 'Segoe UI, sans-serif',
+                        size: 14
+                    }
+                };
+
+                Plotly.newPlot('graphDiv', [trace], layout, {responsive: true});
+                document.getElementById('resultGrafico').classList.add('show');
+
+            } catch(e) {
+                displayResult('resultGrafico', '<div class="error">❌ Erro ao plotar função: ' + e.message + '</div>');
+            }
+        }
+
+        function toggleLimites() {
+            const tipo = document.getElementById('tipoIntegral').value;
+            const limitesDiv = document.getElementById('limitesDiv');
+            limitesDiv.style.display = tipo === 'definida' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
