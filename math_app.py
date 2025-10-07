@@ -13,21 +13,62 @@ def render_katex(latex_str, height=None):
     """Renderiza uma string LaTeX usando KaTeX em um container HTML estilizado."""
     if height is None:
         # Estimar altura baseado no comprimento da string
-        height = max(80, min(300, len(latex_str) // 2))
+        height = max(100, min(400, len(latex_str) // 2 + 50))
+
+    # Escapar caracteres especiais para evitar problemas de parsing
+    latex_content = latex_str.replace('\\', '\\\\')
 
     html = f"""
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
-        onload="renderMathInElement(document.body, {{
-            delimiters: [
-                {{left: '$$', right: '$$', display: true}},
-                {{left: '$', right: '$', display: false}}
-            ]
-        }});"></script>
-    <div class="katex-result">{latex_str}</div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+        <style>
+            body {{
+                margin: 0;
+                padding: 20px;
+                font-family: "Source Sans Pro", sans-serif;
+            }}
+            .katex-result {{
+                font-size: 20px;
+                text-align: center;
+                padding: 20px;
+                background-color: #ffffff;
+                color: #333;
+                border: 2px solid #4CAF50;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                overflow-x: auto;
+                min-height: 50px;
+            }}
+            .katex-display {{
+                margin: 1em 0;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="katex-result" id="math-content">{latex_content}</div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {{
+                renderMathInElement(document.getElementById("math-content"), {{
+                    delimiters: [
+                        {{left: "$$", right: "$$", display: true}},
+                        {{left: "$", right: "$", display: false}},
+                        {{left: "\\[", right: "\\]", display: true}},
+                        {{left: "\\(", right: "\\)", display: false}}
+                    ],
+                    throwOnError: false,
+                    errorColor: "#cc0000",
+                    strict: false
+                }});
+            }});
+        </script>
+    </body>
+    </html>
     """
-    components.html(html, height=height)
+    components.html(html, height=height, scrolling=True)
 
 def render_katex_steps(steps_list, title=""):
     """Renderiza uma lista de passos matemáticos, cada um em um container estilizado."""
@@ -37,7 +78,7 @@ def render_katex_steps(steps_list, title=""):
     for step in steps_list:
         # Se for um passo de cálculo (começando com $$)
         if step.startswith("$$"):
-            render_katex(step, height=100)
+            render_katex(step, height=120)
         # Se for um passo de texto explicativo
         else:
             st.markdown(f'<div class="step-container">{step}</div>', unsafe_allow_html=True)
@@ -92,19 +133,6 @@ div.stButton > button:hover {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     font-size: 1.1em;
-}
-/* Container para resultados KaTeX */
-.katex-result {
-    font-size: 22px;
-    text-align: center;
-    padding: 20px;
-    background-color: #ffffff;
-    color: #333;
-    border: 2px solid #4CAF50;
-    border-radius: 8px;
-    margin: 10px 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    overflow-x: auto; /* Garante rolagem em telas pequenas */
 }
 /* Estilo das abas */
 .stTabs [data-baseweb="tab-list"] {
